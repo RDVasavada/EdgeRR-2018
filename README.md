@@ -1,2 +1,2 @@
-# EdgeRR-2018
-Source code for the 2018-2019 FTC challenge Rover Ruckus
+# HowellRR-2018
+Official repository for The Edge's 2018-2019 Rover Ruckus code. For more information, visit: https://www.team10294.com/team.html
