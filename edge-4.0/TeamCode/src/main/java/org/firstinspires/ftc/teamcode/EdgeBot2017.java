@@ -236,6 +236,19 @@ public class EdgeBot2017 {
         telemetry.addData("Rear right", rearRight);
     }
 
+    public void tankDrive(double lSpeed, double rSpeed) {
+        // Set motor directions
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rearLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rearRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        frontLeftMotor.setPower(lSpeed);
+        frontRightMotor.setPower(rSpeed);
+        rearLeftMotor.setPower(lSpeed);
+        rearRightMotor.setPower(rSpeed);
+    }
+
     public void driveBackwardForSteps(int numberOfSteps, double speed) {
         // Set motor directions
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);

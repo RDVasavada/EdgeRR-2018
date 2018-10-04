@@ -31,7 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -47,10 +47,8 @@ import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 
 /**
@@ -91,9 +89,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * is explained below.
  */
 
-@Autonomous(name="RED FOOTPRINT MUST BE ON RED ALLIANCE WALL", group ="Concept")
+@TeleOp(name="Vuforia Navigation - Teleop", group ="Concept")
 //@Disabled
-public class TestVuforiaNavRoverRuckus extends LinearOpMode {
+public class VuforiaNavTeleop extends LinearOpMode {
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -259,7 +257,7 @@ public class TestVuforiaNavRoverRuckus extends LinearOpMode {
 
         final int CAMERA_FORWARD_DISPLACEMENT  = 150;   // eg: Camera is 150 mm in front of robot center
         final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
-        final int CAMERA_LEFT_DISPLACEMENT     = 200;
+        final int CAMERA_LEFT_DISPLACEMENT     = 200;     
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -280,6 +278,8 @@ public class TestVuforiaNavRoverRuckus extends LinearOpMode {
         /** Start tracking the data sets we care about. */
         targetsRoverRuckus.activate();
         while (opModeIsActive()) {
+
+            robot.tankDrive(gamepad1.left_stick_y, gamepad1.right_stick_y);
 
             // check all the trackable target to see which one (if any) is visible.
             targetVisible = false;
@@ -309,19 +309,6 @@ public class TestVuforiaNavRoverRuckus extends LinearOpMode {
                 Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
                 telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
 
-                VectorF pictureTranslation = redFootprintLocationOnField.getTranslation();
-
-                double xTranslation = pictureTranslation.get(0) / mmPerInch - translation.get(0) / mmPerInch;
-
-                if (xTranslation > .5) {
-                    robot.driveForwards(0.2);
-                } else if (xTranslation < -0.5) {
-                    robot.driveBackwards(0.2);
-                } else {
-                    robot.stopDriveMotors();
-                }
-
-                telemetry.addData("xTranslation", xTranslation);
             }
             else {
                 telemetry.addData("Visible Target", "none");
