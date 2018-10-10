@@ -313,15 +313,15 @@ public class TestVuforiaNavRoverRuckus extends LinearOpMode {
 
                 double xTranslation = pictureTranslation.get(0) / mmPerInch - translation.get(0) / mmPerInch;
 
-                if (xTranslation > .5) {
+                if (xTranslation > 1) {
                     robot.driveForwards(0.2);
-                } else if (xTranslation < -0.5) {
+                } else if (xTranslation < -1) {
                     robot.driveBackwards(0.2);
                 } else {
                     robot.stopDriveMotors();
                 }
 
-                telemetry.addData("xTranslation", xTranslation);
+                telemetry.addData("xTranslation in inches:", xTranslation);
             }
             else {
                 telemetry.addData("Visible Target", "none");

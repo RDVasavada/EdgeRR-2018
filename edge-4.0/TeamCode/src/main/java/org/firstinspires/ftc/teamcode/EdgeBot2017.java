@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.Camera;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -67,6 +68,9 @@ public class EdgeBot2017 {
     // Local OpMode members
     private HardwareMap hMap;
     private ElapsedTime localPeriod = new ElapsedTime();
+
+    // External Camera
+    //public Camera externalCamera = null;
 
     // A reference to the current opMode
     public LinearOpMode currentOpmode;
@@ -157,6 +161,8 @@ public class EdgeBot2017 {
         rightLED.setMode(DigitalChannel.Mode.OUTPUT);
         turnOffLEDs();
         */
+
+        externalCamera = hMap.get(Camera.class, "camera");
     }
 
     // Waits until a certain time has elapsed since the last call
