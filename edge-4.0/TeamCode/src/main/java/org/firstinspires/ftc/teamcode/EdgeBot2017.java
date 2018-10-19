@@ -161,8 +161,6 @@ public class EdgeBot2017 {
         rightLED.setMode(DigitalChannel.Mode.OUTPUT);
         turnOffLEDs();
         */
-
-        externalCamera = hMap.get(Camera.class, "camera");
     }
 
     // Waits until a certain time has elapsed since the last call
