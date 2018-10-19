@@ -30,15 +30,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 
 /**
@@ -54,9 +50,9 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Servo and pot test - rotate to point", group="Linear Opmode")
+@TeleOp(name="Servo and pot test", group="Linear Opmode")
 //@Disabled
-public class ServoTest extends LinearOpMode {
+public class ServoTestRotate extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -84,12 +80,11 @@ public class ServoTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double voltage = potentiometer.getVoltage();
-            double degrees = (voltage * 360)/MAX_VOLTAGE;
 
-            if (180 - degrees > 10) {
-                servo.setPower(1);
-            } else if (degrees - 180 > 10) {
-                servo.setPower(-1);
+            if (gamepad1.x) {
+                servo.setPower(0.15);
+            } else if (gamepad1.b) {
+                servo.setPower(-0.15);
             } else {
                 servo.setPower(0);
             }
