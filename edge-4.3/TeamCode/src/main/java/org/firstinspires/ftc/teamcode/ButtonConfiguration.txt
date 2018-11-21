@@ -2,13 +2,14 @@ Button Configuration
 
 Controller 1:
     - Left Joystick: X for drive Rotation, Y for drive Forward/Reverse
-    - Left Trigger: Go Forwards
-    - Right Trigger: Go Backwards
-    - Right Joystick: Point to direct wheels
+    - Right Joystick: Swerve
+    - Left Trigger: Lift motor reverse
+    - Right Trigger: Lift motor forward
     - A Button: Particle pickup reverse
     - Y Button: Particle pickup forward
  Controller 2:
-    - Left Joystick: Y to control main lift
-    - Right Joystick: X to control boom rotation, Y to control boom extension
-    - A Button: Lift reverse
-    - Y Button: Lift forward
+    - Left Joystick: N/A
+    - Right Joystick: X to control boom rotation, Y to control boom angle
+    - Left Trigger: Boom retract
+    - Right Trigger: Boom extend
+
