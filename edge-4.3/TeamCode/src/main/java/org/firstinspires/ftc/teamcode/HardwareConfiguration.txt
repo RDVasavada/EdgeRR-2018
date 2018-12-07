@@ -1,0 +1,9 @@
+Motors (7)
+- Left Drive Motor: "ldmotor"
+- Right Drive Motor: "rdmotor"
+- Lift Motor: "liftmotor"
+- Boom Extension Motor: "extendmotor"
+- Boom Rotation Motor: "rotatemotor"
+- Boom Angle Motor: "anglemotor"
+- Particle Pickup (Intake) Motor: "intakemotor"
+

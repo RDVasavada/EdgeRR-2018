@@ -1,15 +1,29 @@
 Button Configuration
 
+**Current Configuration**
 Controller 1:
-    - Left Joystick: X for drive Rotation, Y for drive Forward/Reverse
-    - Right Joystick: Swerve
+    - Left Joystick: Y axis for drive forward/reverse, X axis for rotation
     - Left Trigger: Lift motor reverse
-    - Right Trigger: Lift motor forward
-    - A Button: Particle pickup reverse
-    - Y Button: Particle pickup forward
- Controller 2:
-    - Left Joystick: N/A
-    - Right Joystick: X to control boom rotation, Y to control boom angle
+    - Right Trigger: Lift motor forwards
+Controller 2:
+    - Right Joystick: Y axis for boom angle motor, X axis for boom rotate motor
+    - Left Trigger: Boom extension motor reverse
+    - Right Trigger: Boom extension motor forwards
+    - A Button: Set intake servos to 0 degrees
+    - B Button: Set intake servos to 90 degrees
+    - Y Button: Set intake servos to 180 degrees
+
+** PLANNED Competition Configuration **
+Controller 1 (Driver):
+    - Left Joystick: X axis for wheel Rotation
+    - Right Joystick: X axis for Rotation
+    - Left Trigger: Drive reverse
+    - Right Trigger: Drive forward
+Controller 2 (Manipulator):
+    - Left Joystick: Y axis for lift motor
+    - Right Joystick: X axis to control boom rotation, Y axis to control boom angle
     - Left Trigger: Boom retract
     - Right Trigger: Boom extend
+    - A Button: Particle pickup (intake) in
+    - Y Button: Particle pickup (intake) out
 

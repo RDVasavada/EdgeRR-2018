@@ -39,17 +39,6 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-/**
- * {@link EdgeTeleop} illustrates how to use the REV Robotics
- * Time-of-Flight Range Sensor.
- *
- * The op mode assumes that the range sensor is configured with a name of "sensor_range".
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- *
- * @see <a href="http://revrobotics.com">REV Robotics Web Page</a>
- */
 @TeleOp(name = "Driver Control")
 //@Disabled
 public class EdgeTeleop extends LinearOpMode {
@@ -69,27 +58,36 @@ public class EdgeTeleop extends LinearOpMode {
             /* *** GamePad One *** */
             double driveSpeed = gamepad1.left_stick_y;
             double rotateSpeed = gamepad1.left_stick_x;
+            //double swerveSpeed = gamepad2.right_stick_x * 0.5;
 
             double liftSpeed = gamepad1.right_trigger - gamepad1.left_trigger;
 
             robot.tankDrive(driveSpeed, rotateSpeed);
 
-            robot.robotLift(liftSpeed);
+            robot.robotLift(liftSpeed * 0.4);
 
             if (gamepad1.a) {
-                robot.particleIn(0.5);
+                //robot.particleIn(0.5);
             } else if (gamepad1.y) {
-                robot.particleOut(0.5);
+                //robot.particleOut(0.5);
             }
 
             /* *** GamePad Two *** */
-            double boomAngleSpeed = gamepad2.right_stick_y;
+            double boomAngleSpeed = gamepad2.right_stick_y * 0.4;
             double boomRotateSpeed = gamepad2.right_stick_x;
-            double boomExtendSpeed = gamepad2.right_trigger - gamepad2.left_trigger;
+            double boomExtendSpeed = (gamepad2.right_trigger - gamepad2.left_trigger) * 0.4;
 
             robot.boomAngle(boomAngleSpeed);
             robot.boomRotate(boomRotateSpeed);
             robot.boomExtend(boomExtendSpeed);
+
+            if (gamepad2.a) {
+                robot.servoClamp();
+            } else if (gamepad2.b) {
+                robot.servoMid();
+            } else if (gamepad2.y) {
+                robot.servoRelease();
+            }
         }
     }
 
