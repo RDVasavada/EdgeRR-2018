@@ -32,16 +32,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Driver Control")
+@Autonomous(name = "Auton Test - Distance Sensors")
 //@Disabled
-public class EdgeTeleop extends LinearOpMode {
+public class CraterAuton extends LinearOpMode {
 
     EdgeBot robot;
 
@@ -55,45 +54,38 @@ public class EdgeTeleop extends LinearOpMode {
 
         waitForStart();
 
-        int startingCount = robot.liftMotor.getCurrentPosition();
+        //robot.robotLowerAuton();
 
-        while(opModeIsActive()) {
-            /* *** GamePad One *** */
-            double driveSpeed = gamepad1.left_stick_y;
-            double rotateSpeed = gamepad1.left_stick_x;
-            //double swerveSpeed = gamepad2.right_stick_x * 0.5;
+        while (opModeIsActive()) {
+            robot.driveForwards(0.05);
 
-            double liftSpeed = gamepad1.right_trigger - gamepad1.left_trigger;
+            double topSensorDistance = robot.getTopSensorDistance(DistanceUnit.INCH);
+            double bottomSensorDistance = robot.getBottomSensorDistance(DistanceUnit.INCH);
 
-            robot.tankDrive(driveSpeed, rotateSpeed);
+            boolean triggeredTop = false;
+            boolean triggeredBottom = false;
 
-            robot.robotLift(liftSpeed);
-            telemetry.addData("Encoder count", robot.liftMotor.getCurrentPosition() - startingCount);
-
-            /* *** GamePad Two *** */
-            double boomAngleSpeed = gamepad2.right_stick_y * 0.4;
-            double boomRotateSpeed = gamepad2.right_stick_x;
-            double boomExtendSpeed = (gamepad2.right_trigger - gamepad2.left_trigger) * 0.4;
-
-            robot.boomAngle(boomAngleSpeed);
-            robot.boomRotate(boomRotateSpeed);
-            robot.boomExtend(boomExtendSpeed);
-
-            if (gamepad2.a) {
-                robot.rightServoRelease();
-                telemetry.addData("Right Servo", "release");
-            } else if (gamepad2.b) {
-                robot.rightServoClamp();
-                telemetry.addData("Right Servo", "clamp");
-            } else if (gamepad2.x) {
-                robot.leftServoRelease();
-                telemetry.addData("Left Servo", "release");
-            } else if (gamepad2.y) {
-                robot.leftServoClamp();
-                telemetry.addData("Left Servo", "clamp");
+            if (topSensorDistance < 10) {
+                triggeredTop = true;
             }
 
-            telemetry.addData("gryo", robot.getRawGyroHeading());
+            if (bottomSensorDistance < 10) {
+                triggeredBottom = true;
+            }
+
+            if (triggeredBottom && triggeredTop) {
+                if (Math.abs(topSensorDistance - bottomSensorDistance) < 2) {
+                    telemetry.addData("Object detected", "sphere");
+                }
+            } else if (triggeredBottom) {
+                if (topSensorDistance - bottomSensorDistance < 6) {
+                    telemetry.addData("Object detected", "cube");
+                    robot.stopDriveMotors();
+                }
+            }
+
+            telemetry.addData("top sensor", robot.getTopSensorDistance(DistanceUnit.INCH));
+            telemetry.addData("bottom sensor", robot.getBottomSensorDistance(DistanceUnit.INCH));
 
             telemetry.update();
         }

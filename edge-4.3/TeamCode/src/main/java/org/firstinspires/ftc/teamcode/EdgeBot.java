@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -27,12 +28,11 @@ public class EdgeBot {
     private DcMotor rightDriveMotor;
 
     // Declare functional motors
-    private DcMotor liftMotor;
+    public DcMotor liftMotor;
 
     private DcMotor boomExtendMotor;
     private DcMotor boomRotateMotor;
     private DcMotor boomAngleMotor;
-    private DcMotor particlePickupMotor;
 
     // Declare drive servos
     private EdgeDriveServo frontLeftServo;
@@ -46,6 +46,10 @@ public class EdgeBot {
     // Declare other servos
     private Servo leftClampServo;
     private Servo rightClampServo;
+
+    // Declare distance sensors
+    private DistanceSensor bottomDistanceSensor;
+    private DistanceSensor topDistanceSensor;
 
     // Declare imu (inertial motion unit)
     public BNO055IMU imu;
@@ -78,7 +82,10 @@ public class EdgeBot {
         //rearRightServo = new EdgeDriveServo(hMap.crservo.get("rrservo"), hMap.analogInput.get("rrpot"));
 
         leftClampServo = hMap.servo.get("lcservo");
+        leftClampServo.scaleRange(0.1, 0.9);
+
         rightClampServo = hMap.servo.get("rcservo");
+        rightClampServo.scaleRange(0.1, 0.9);
 
         // Initialize drive motors
         leftDriveMotor = hMap.dcMotor.get("ldmotor");
@@ -86,13 +93,20 @@ public class EdgeBot {
 
         // Initialize functional motors
         liftMotor = hMap.dcMotor.get("liftmotor");
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         boomExtendMotor = hMap.dcMotor.get("extendmotor");
+        boomExtendMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         boomRotateMotor = hMap.dcMotor.get("rotatemotor");
         boomRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         boomAngleMotor = hMap.dcMotor.get("anglemotor");
-        /*
-        particlePickupMotor = hMap.dcMotor.get("intakemotor");
+        boomAngleMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Initialize the distance sensors
+        bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
+        topDistanceSensor = hMap.get(DistanceSensor.class, "toprange");
 
         // Initialize the imu
         imu = hMap.get(BNO055IMU.class, "imu");
@@ -104,7 +118,6 @@ public class EdgeBot {
         parameters.loggingTag = "IMU";
 
         imu.initialize(parameters);
-        */
     }
 
     // Waits until a certain time has elapsed since the last call
@@ -157,14 +170,6 @@ public class EdgeBot {
         rightDriveMotor.setPower(rightPower);
     }
 
-    public void traditionalTankDrive(double left, double right) {
-        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        leftDriveMotor.setPower(left);
-        rightDriveMotor.setPower(right);
-    }
-
     // Stop all of the drive motors
     public void stopDriveMotors() {
         leftDriveMotor.setPower(0);
@@ -191,28 +196,90 @@ public class EdgeBot {
         setDriveMotorsToCommonSpeed(speed);
     }
 
-    public void driveBackwardForSteps(int numberOfSteps, double speed) {
+    public void driveBackwardForSteps(int numberOfSteps, double maxSpeed, Telemetry telemetry) {
         // Set motor directions
         leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Calculate step counts
-        int leftDriveMotorStepsToDo = leftDriveMotor.getCurrentPosition() + numberOfSteps;
-        int rightDriveMotorStepsToDo = rightDriveMotor.getCurrentPosition() + numberOfSteps;
+        int leftDriveMotorTarget = leftDriveMotor.getCurrentPosition() + numberOfSteps;
+        int rightDriveMotorTarget = rightDriveMotor.getCurrentPosition() + numberOfSteps;
 
         // Set target steps
-        leftDriveMotor.setTargetPosition(leftDriveMotorStepsToDo);
-        rightDriveMotor.setTargetPosition(rightDriveMotorStepsToDo);
+        leftDriveMotor.setTargetPosition(leftDriveMotorTarget);
+        rightDriveMotor.setTargetPosition(rightDriveMotorTarget);
 
         // Turn on RUN_TO_POSITION
         setDriveMotorsRunToPosition();
 
         // Start motion
-        setDriveMotorsToCommonSpeed(Math.abs(speed));
+        double lowSpeed = 0.1;
+        setDriveMotorsToCommonSpeed(lowSpeed);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
+
+            double stepsToDo = ((leftDriveMotorTarget - leftDriveMotor.getCurrentPosition()) + (rightDriveMotorTarget - rightDriveMotor.getCurrentPosition())) / 2;
+            double progress = (numberOfSteps - stepsToDo) / numberOfSteps;
+
+            double currentSpeed = Math.sin((Math.PI) * progress) * maxSpeed + lowSpeed;
+            if (currentSpeed > maxSpeed) {
+                currentSpeed = maxSpeed;
+            }
+
+            telemetry.addData("progress", progress);
+            telemetry.addData("speed", currentSpeed);
+            telemetry.update();
+
+            setDriveMotorsToCommonSpeed(currentSpeed);
+        }
+
+        // Stop all motion;
+        stopDriveMotors();
+
+        // Turn off RUN_TO_POSITION
+        setDriveMotorsRunUsingEncoders();
+
+    }
+
+    public void driveForwardForSteps(int numberOfSteps, double maxSpeed, Telemetry telemetry) {
+        // Set motor directions
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Calculate step counts
+        int leftDriveMotorTarget = leftDriveMotor.getCurrentPosition() + numberOfSteps;
+        int rightDriveMotorTarget = rightDriveMotor.getCurrentPosition() + numberOfSteps;
+
+        // Set target steps
+        leftDriveMotor.setTargetPosition(leftDriveMotorTarget);
+        rightDriveMotor.setTargetPosition(rightDriveMotorTarget);
+
+        // Turn on RUN_TO_POSITION
+        setDriveMotorsRunToPosition();
+
+        // Start motion
+        double lowSpeed = 0.1;
+        setDriveMotorsToCommonSpeed(lowSpeed);
+
+        // keep looping while we are still active, and there is time left, and both motors are running.
+        while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
+            waitForTick(50);
+
+            double stepsToDo = ((leftDriveMotorTarget - leftDriveMotor.getCurrentPosition()) + (rightDriveMotorTarget - rightDriveMotor.getCurrentPosition())) / 2;
+            double progress = (numberOfSteps - stepsToDo) / numberOfSteps;
+
+            double currentSpeed = Math.sin((Math.PI) * progress) * maxSpeed + lowSpeed;
+            if (currentSpeed > maxSpeed) {
+                currentSpeed = maxSpeed;
+            }
+
+            telemetry.addData("progress", progress);
+            telemetry.addData("speed", currentSpeed);
+            telemetry.update();
+
+            setDriveMotorsToCommonSpeed(currentSpeed);
         }
 
         // Stop all motion;
@@ -222,47 +289,122 @@ public class EdgeBot {
         setDriveMotorsRunUsingEncoders();
     }
 
-    public void driveForwardForSteps(int numberOfSteps, double speed) {
-        // Set motor directions
+    public void driveBackwardForInches(double inches, double speed, Telemetry telemetry) {
+        int steps = inchToEncoder(inches);
+
+        driveBackwardForSteps(steps, speed, telemetry);
+    }
+
+    public void driveForwardForInches(double inches, double speed, Telemetry telemetry) {
+        int steps = inchToEncoder(inches);
+
+        driveForwardForSteps(steps, speed, telemetry);
+    }
+
+    // Rotate counterclockwise at given speed
+    public void rotateCounterClockwise(double speed) {
         leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Calculate step counts
-        int leftDriveMotorStepsToDo = leftDriveMotor.getCurrentPosition() + numberOfSteps;
-        int rightDriveMotorStepsToDo = rightDriveMotor.getCurrentPosition() + numberOfSteps;
+        setDriveMotorsToCommonSpeed(speed);
+    }
 
-        // Set target steps
-        leftDriveMotor.setTargetPosition(leftDriveMotorStepsToDo);
-        rightDriveMotor.setTargetPosition(rightDriveMotorStepsToDo);
+    // Rotate clockwise at given speed
+    public void rotateClockwise(double speed) {
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // Turn on RUN_TO_POSITION
-        setDriveMotorsRunToPosition();
+        setDriveMotorsToCommonSpeed(speed);
+    }
 
-        // Start motion
-        setDriveMotorsToCommonSpeed(Math.abs(speed));
+    public void rotateCounterClockwiseGyro(int degreesToRotate, double maxSpeed) {
+        // Record initial heading
+        double initialHeading = getRawGyroHeading();
 
-        // keep looping while we are still active, and there is time left, and both motors are running.
-        while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
-            waitForTick(50);
+        // Calculate target heading
+        double targetHeading = initialHeading + degreesToRotate;
+
+        if (targetHeading > 180) {
+            targetHeading -= 360;
+        } else if (targetHeading < -180) {
+            targetHeading += 360;
         }
 
-        // Stop all motion;
+        setDriveMotorsRunUsingEncoders();
+
+        double currentHeading = initialHeading;
+
+        double error = targetHeading - currentHeading;
+
+        if (error < -180) {
+            error += 360;
+        }
+
+        while (Math.abs(error) > 1 && currentOpmode.opModeIsActive()) {
+            currentHeading = getRawGyroHeading();
+
+            error = targetHeading - currentHeading;
+
+            if (error < -180) {
+                error += 360;
+            }
+
+            double speed = maxSpeed * (Math.abs(error) / 200) + 0.05;
+            if (speed > maxSpeed) {
+                speed = maxSpeed;
+            }
+
+            rotateCounterClockwise(speed);
+        }
+
         stopDriveMotors();
 
-        // Turn off RUN_TO_POSITION
         setDriveMotorsRunUsingEncoders();
     }
 
-    public void driveBackwardForInches(double inches, double speed) {
-        int steps = inchToEncoder(inches);
+    public void rotateClockwiseGyro(int degreesToRotate, double maxSpeed) {
+        // Record initial heading
+        double initialHeading = getRawGyroHeading();
 
-        driveBackwardForSteps(steps, speed);
-    }
+        // Calculate target heading
+        double targetHeading = initialHeading - degreesToRotate;
 
-    public void driveForwardForInches(double inches, double speed) {
-        int steps = inchToEncoder(inches);
+        if (targetHeading > 180) {
+            targetHeading -= 360;
+        } else if (targetHeading < -180) {
+            targetHeading += 360;
+        }
 
-        driveForwardForSteps(steps, speed);
+        setDriveMotorsRunUsingEncoders();
+
+        double currentHeading = initialHeading;
+
+        double error = targetHeading - currentHeading;
+
+        if (error > 180) {
+            error -= 360;
+        }
+
+        while (Math.abs(error) > 1 && currentOpmode.opModeIsActive()) {
+            currentHeading = getRawGyroHeading();
+
+            error = targetHeading - currentHeading;
+
+            if (error > 180) {
+                error -= 360;
+            }
+
+            double speed = maxSpeed * (Math.abs(error) / 200) + 0.05;
+            if (speed > maxSpeed) {
+                speed = maxSpeed;
+            }
+
+            rotateClockwise(speed);
+        }
+
+        stopDriveMotors();
+
+        setDriveMotorsRunUsingEncoders();
     }
 
     // Set motors to common speed
@@ -295,6 +437,33 @@ public class EdgeBot {
         rightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    public void robotLowerAuton() {
+        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Calculate step counts
+        int liftMotorTarget = liftMotor.getCurrentPosition() + 15000;
+
+        // Set target steps
+        liftMotor.setTargetPosition(liftMotorTarget);
+
+        // Turn on RUN_TO_POSITION
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // keep looping while we are still active, and there is time left, and both motors are running.
+        while (liftMotor.isBusy() && currentOpmode.opModeIsActive()) {
+            waitForTick(50);
+            liftMotor.setPower(1);
+        }
+
+        // Stop all motion;
+        liftMotor.setPower(0);
+
+        // Turn off RUN_TO_POSITION
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+    }
+
     public void robotLift(double power) {
         liftMotor.setPower(power);
     }
@@ -311,27 +480,20 @@ public class EdgeBot {
         boomAngleMotor.setPower(power);
     }
 
-    public void particleOut(double power) {
-        particlePickupMotor.setPower(power);
-    }
-
-    public void particleIn(double power) {
-        particlePickupMotor.setPower(-power);
-    }
-
-    public void servoClamp() {
-        leftClampServo.setPosition(0);
-        rightClampServo.setPosition(0);
-    }
-
-    public void servoMid() {
-        leftClampServo.setPosition(0.5);
-        rightClampServo.setPosition(0.5);
-    }
-
-    public void servoRelease() {
+    public void leftServoRelease() {
         leftClampServo.setPosition(1);
+    }
+
+    public void leftServoClamp() {
+        leftClampServo.setPosition(0);
+    }
+
+    public void rightServoRelease() {
         rightClampServo.setPosition(1);
+    }
+
+    public void rightServoClamp() {
+        rightClampServo.setPosition(0);
     }
 
     public void rotateWheelsToHeading(double targetHeading) {
@@ -350,6 +512,15 @@ public class EdgeBot {
                 driveServos[i].setPower(output);
             }
         }
+    }
+
+    // Get the distance sensors values
+    public double getBottomSensorDistance(DistanceUnit unit) {
+        return bottomDistanceSensor.getDistance(unit);
+    }
+
+    public double getTopSensorDistance(DistanceUnit unit) {
+        return topDistanceSensor.getDistance(unit);
     }
 
     // Get the raw gyro heading in degrees

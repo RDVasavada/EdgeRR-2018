@@ -52,66 +52,58 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * @see <a href="http://revrobotics.com">REV Robotics Web Page</a>
  */
 @TeleOp(name = "Sensor: REV2mDistance", group = "Sensor")
-//@Disabled
+@Disabled
 public class SensorREV2mDistanceTest extends LinearOpMode {
 
-    private DistanceSensor topSensor;
-    private DistanceSensor bottomSensor;
+    EdgeBot robot;
 
     @Override
     public void runOpMode() {
-        // you can use this as a regular DistanceSensor.
-        topSensor = hardwareMap.get(DistanceSensor.class, "top_range");
-        bottomSensor = hardwareMap.get(DistanceSensor.class, "bottom_range");
-
-        // you can also cast this to a Rev2mDistanceSensor if you want to use added
-        // methods associated with the Rev2mDistanceSensor class.
-        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor)topSensor;
+        robot = new EdgeBot();
+        robot.init(hardwareMap, this);
 
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
 
         waitForStart();
-        while(opModeIsActive()) {
-            // generic DistanceSensor methods.
-            telemetry.addData("deviceName",topSensor.getDeviceName() );
-            telemetry.addData("range", String.format("%.01f mm", topSensor.getDistance(DistanceUnit.MM)));
-            telemetry.addData("range", String.format("%.01f cm", topSensor.getDistance(DistanceUnit.CM)));
-            telemetry.addData("range", String.format("%.01f m", topSensor.getDistance(DistanceUnit.METER)));
-            telemetry.addData("range", String.format("%.01f in", topSensor.getDistance(DistanceUnit.INCH)));
 
-            telemetry.addData("deviceName",topSensor.getDeviceName() );
-            telemetry.addData("range", String.format("%.01f mm", bottomSensor.getDistance(DistanceUnit.MM)));
-            telemetry.addData("range", String.format("%.01f cm", bottomSensor.getDistance(DistanceUnit.CM)));
-            telemetry.addData("range", String.format("%.01f m", bottomSensor.getDistance(DistanceUnit.METER)));
-            telemetry.addData("range", String.format("%.01f in", bottomSensor.getDistance(DistanceUnit.INCH)));
+        /*
+        robot.driveForwardForSteps(1000, 0.2, telemetry);
+        sleep(1000);
+        robot.driveBackwardForSteps(1000, 0.2, telemetry);
+        sleep(1000);
+        robot.driveForwardForSteps(1000, 0.2, telemetry);
+        */
 
-            double topSensorDistance = topSensor.getDistance(DistanceUnit.CM);
-            double bottomSensorDistance = bottomSensor.getDistance(DistanceUnit.CM);
+        /*
+        robot.rotateClockwiseGyro(90, 0.3);
+        sleep(1000);
+        robot.rotateClockwiseGyro(90, 0.3);
+        sleep(1000);
+        robot.rotateCounterClockwiseGyro(90, 0.3);
+        */
 
-            boolean triggeredTop = false;
-            boolean triggeredBottom = false;
+        double topSensorDistance = robot.getTopSensorDistance(DistanceUnit.INCH);
+        double bottomSensorDistance = robot.getBottomSensorDistance(DistanceUnit.INCH);
 
-            if (topSensorDistance < 10) {
-                triggeredTop = true;
-            }
+        boolean triggeredTop = false;
+        boolean triggeredBottom = false;
 
-            if (bottomSensorDistance < 10) {
-                triggeredBottom = true;
-            }
-
-            if (triggeredBottom && triggeredTop) {
-                telemetry.addData("Object detected", "sphere");
-            } else if (triggeredBottom) {
-                telemetry.addData("Object detected", "cube");
-            }
-
-            // Rev2mDistanceSensor specific methods.
-            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
-            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
-
-            telemetry.update();
+        if (topSensorDistance < 10) {
+            triggeredTop = true;
         }
+
+        if (bottomSensorDistance < 10) {
+            triggeredBottom = true;
+        }
+
+        if (triggeredBottom && triggeredTop) {
+            telemetry.addData("Object detected", "sphere");
+        } else if (triggeredBottom) {
+            telemetry.addData("Object detected", "cube");
+        }
+
+        telemetry.update();
     }
 
 }

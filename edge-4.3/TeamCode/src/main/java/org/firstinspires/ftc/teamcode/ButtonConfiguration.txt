@@ -9,9 +9,10 @@ Controller 2:
     - Right Joystick: Y axis for boom angle motor, X axis for boom rotate motor
     - Left Trigger: Boom extension motor reverse
     - Right Trigger: Boom extension motor forwards
-    - A Button: Set intake servos to 0 degrees
-    - B Button: Set intake servos to 90 degrees
-    - Y Button: Set intake servos to 180 degrees
+    - A Button: Right clamp servo release
+    - B Button: Right clamp servo close
+    - X Button: Left clamp servo release
+    - Y Button: Left clamp servo close
 
 ** PLANNED Competition Configuration **
 Controller 1 (Driver):
@@ -24,6 +25,9 @@ Controller 2 (Manipulator):
     - Right Joystick: X axis to control boom rotation, Y axis to control boom angle
     - Left Trigger: Boom retract
     - Right Trigger: Boom extend
-    - A Button: Particle pickup (intake) in
-    - Y Button: Particle pickup (intake) out
+    - A Button: Right clamp servo release
+    - B Button: Right clamp servo close
+    - X Button: Left clamp servo release
+    - Y Button: Left clamp servo close
+
 
