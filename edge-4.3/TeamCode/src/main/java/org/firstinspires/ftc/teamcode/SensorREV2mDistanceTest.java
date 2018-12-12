@@ -52,7 +52,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * @see <a href="http://revrobotics.com">REV Robotics Web Page</a>
  */
 @TeleOp(name = "Sensor: REV2mDistance", group = "Sensor")
-@Disabled
+//@Disabled
 public class SensorREV2mDistanceTest extends LinearOpMode {
 
     EdgeBot robot;
@@ -67,43 +67,34 @@ public class SensorREV2mDistanceTest extends LinearOpMode {
 
         waitForStart();
 
-        /*
-        robot.driveForwardForSteps(1000, 0.2, telemetry);
-        sleep(1000);
-        robot.driveBackwardForSteps(1000, 0.2, telemetry);
-        sleep(1000);
-        robot.driveForwardForSteps(1000, 0.2, telemetry);
-        */
+        while (opModeIsActive()) {
 
-        /*
-        robot.rotateClockwiseGyro(90, 0.3);
-        sleep(1000);
-        robot.rotateClockwiseGyro(90, 0.3);
-        sleep(1000);
-        robot.rotateCounterClockwiseGyro(90, 0.3);
-        */
+            double topSensorDistance = robot.getTopSensorDistance(DistanceUnit.INCH);
+            double bottomSensorDistance = robot.getBottomSensorDistance(DistanceUnit.INCH);
 
-        double topSensorDistance = robot.getTopSensorDistance(DistanceUnit.INCH);
-        double bottomSensorDistance = robot.getBottomSensorDistance(DistanceUnit.INCH);
+            boolean triggeredTop = false;
+            boolean triggeredBottom = false;
 
-        boolean triggeredTop = false;
-        boolean triggeredBottom = false;
+            if (topSensorDistance < 10) {
+                triggeredTop = true;
+            }
 
-        if (topSensorDistance < 10) {
-            triggeredTop = true;
+            if (bottomSensorDistance < 10) {
+                triggeredBottom = true;
+            }
+
+            telemetry.addData("Top", topSensorDistance);
+            telemetry.addData("Bottom", bottomSensorDistance);
+
+            if (triggeredBottom && triggeredTop) {
+                telemetry.addData("Object detected", "sphere");
+            } else if (triggeredBottom) {
+                telemetry.addData("Object detected", "cube");
+            }
+
+            telemetry.update();
         }
 
-        if (bottomSensorDistance < 10) {
-            triggeredBottom = true;
-        }
-
-        if (triggeredBottom && triggeredTop) {
-            telemetry.addData("Object detected", "sphere");
-        } else if (triggeredBottom) {
-            telemetry.addData("Object detected", "cube");
-        }
-
-        telemetry.update();
     }
 
 }

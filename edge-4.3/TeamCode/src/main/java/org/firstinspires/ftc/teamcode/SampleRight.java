@@ -34,13 +34,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
-@Autonomous(name = "Auton Test")
+@Autonomous(name = "Sample Right")
 //@Disabled
-public class CraterAuton extends LinearOpMode {
+public class SampleRight extends LinearOpMode {
 
     EdgeBot robot;
 
@@ -54,6 +51,7 @@ public class CraterAuton extends LinearOpMode {
 
         waitForStart();
 
+        robot.rotateClockwiseGyro(15, 0.3);
         robot.driveForwardForSteps(560, 0.3, telemetry);
     }
 
