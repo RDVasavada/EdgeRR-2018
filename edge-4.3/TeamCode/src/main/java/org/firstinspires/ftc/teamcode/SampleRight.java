@@ -51,8 +51,15 @@ public class SampleRight extends LinearOpMode {
 
         waitForStart();
 
-        robot.rotateClockwiseGyro(15, 0.3);
-        robot.driveForwardForSteps(560, 0.3, telemetry);
+        while (!robot.imu.isGyroCalibrated()) {
+            sleep(100);
+        }
+
+        robot.driveForwardForSteps(300, 0.2, telemetry);
+        robot.rotateClockwiseGyro(35, 0.3, telemetry);
+        robot.driveForwardForSteps(700, 0.2, telemetry);
+
+        robot.driveForwardForSteps(200, 0.2, telemetry);
     }
 
 }

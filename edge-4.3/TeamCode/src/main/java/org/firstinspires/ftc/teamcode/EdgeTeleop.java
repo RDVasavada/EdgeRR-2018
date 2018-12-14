@@ -91,7 +91,8 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.boomAngle(boomAngleSpeed);
                 angleMotorIsStopped = false;
             } else if (!angleMotorIsStopped) {
-                robot.boomAngleStop();
+                //robot.boomAngleStop();
+                robot.boomAngle(0);
                 angleMotorIsStopped = true;
             }
 
@@ -105,7 +106,8 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.boomExtend(boomExtendSpeed);
                 extensionMotorIsStopped = false;
             } else if (!extensionMotorIsStopped) {
-                robot.boomExtendStop();
+                //robot.boomExtendStop();
+                robot.boomExtend(0);
                 extensionMotorIsStopped = true;
             }
 

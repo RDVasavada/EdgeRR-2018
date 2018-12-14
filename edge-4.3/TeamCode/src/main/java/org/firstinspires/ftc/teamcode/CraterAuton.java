@@ -36,7 +36,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+
+import java.util.List;
 
 @Autonomous(name = "Auton Test")
 //@Disabled
@@ -44,17 +48,75 @@ public class CraterAuton extends LinearOpMode {
 
     EdgeBot robot;
 
+    // 0 left, 1 center, 2 right
+    int cubePosition;
+
     @Override
     public void runOpMode() {
         robot = new EdgeBot();
         robot.init(hardwareMap, this);
+
+        robot.initVuforia(hardwareMap);
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            robot.initTfod(hardwareMap);
+        } else {
+            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+        }
 
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
 
         waitForStart();
 
-        robot.driveForwardForSteps(560, 0.3, telemetry);
+        if (opModeIsActive()) {
+            if (robot.tfod != null) {
+                robot.tfod.activate();
+            }
+
+            while (opModeIsActive()) {
+                if (robot.tfod != null) {
+                    // getUpdatedRecognitions() will return null if no new information is available since
+                    // the last time that call was made.
+                    List<Recognition> updatedRecognitions = robot.tfod.getUpdatedRecognitions();
+                    if (updatedRecognitions != null) {
+                        telemetry.addData("# Object Detected", updatedRecognitions.size());
+                        if (updatedRecognitions.size() == 3) {
+                            int goldMineralX = -1;
+                            int silverMineral1X = -1;
+                            int silverMineral2X = -1;
+                            for (Recognition recognition : updatedRecognitions) {
+                                if (recognition.getLabel().equals(Constants.Vision.LABEL_GOLD_MINERAL)) {
+                                    goldMineralX = (int) recognition.getLeft();
+                                } else if (silverMineral1X == -1) {
+                                    silverMineral1X = (int) recognition.getLeft();
+                                } else {
+                                    silverMineral2X = (int) recognition.getLeft();
+                                }
+                            }
+                            if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+                                if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
+                                    telemetry.addData("Gold Mineral Position", "Left");
+                                    cubePosition = 0;
+                                } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                                    telemetry.addData("Gold Mineral Position", "Right");
+                                    cubePosition = 1;
+                                } else {
+                                    telemetry.addData("Gold Mineral Position", "Center");
+                                    cubePosition = 2;
+                                }
+                            }
+                        }
+                        telemetry.update();
+                    }
+                }
+            }
+        }
+
+        if (robot.tfod != null) {
+            robot.tfod.shutdown();
+        }
+
     }
 
 }

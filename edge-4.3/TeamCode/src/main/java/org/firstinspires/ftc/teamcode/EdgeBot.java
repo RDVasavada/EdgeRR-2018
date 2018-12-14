@@ -11,16 +11,21 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.HardwareDeviceCloseOnTearDown;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 public class EdgeBot {
     // Declare drive motors
@@ -47,6 +52,8 @@ public class EdgeBot {
     private Servo leftClampServo;
     private Servo rightClampServo;
 
+    private Servo flipServo;
+
     private Servo liftServo;
 
     // Declare distance sensors
@@ -62,6 +69,10 @@ public class EdgeBot {
 
     // External Camera
     //public Camera externalCamera = null;
+
+    // Vision
+    protected VuforiaLocalizer vuforia;
+    protected TFObjectDetector tfod;
 
     // A reference to the current opMode
     public LinearOpMode currentOpmode;
@@ -82,6 +93,8 @@ public class EdgeBot {
         //frontRightServo = new EdgeDriveServo(hMap.crservo.get("frservo"), hMap.analogInput.get("frpot"));
         //rearLeftServo = new EdgeDriveServo(hMap.crservo.get("rlservo"), hMap.analogInput.get("rlpot"));
         //rearRightServo = new EdgeDriveServo(hMap.crservo.get("rrservo"), hMap.analogInput.get("rrpot"));
+
+        flipServo = hMap.servo.get("flipservo");
 
         leftClampServo = hMap.servo.get("lcservo");
         leftClampServo.scaleRange(0.1, 0.9);
@@ -219,8 +232,8 @@ public class EdgeBot {
         // Start motion
         double lowSpeed = 0.1;
 
-        leftDriveMotor.setPower(maxSpeed);
-        rightDriveMotor.setPower(maxSpeed);
+        leftDriveMotor.setPower(lowSpeed);
+        rightDriveMotor.setPower(lowSpeed);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
@@ -238,8 +251,8 @@ public class EdgeBot {
             telemetry.addData("speed", currentSpeed);
             telemetry.update();
 
-            leftDriveMotor.setPower(maxSpeed);
-            rightDriveMotor.setPower(maxSpeed);
+            leftDriveMotor.setPower(currentSpeed);
+            rightDriveMotor.setPower(currentSpeed);
         }
     }
 
@@ -262,8 +275,8 @@ public class EdgeBot {
         // Start motion
         double lowSpeed = 0.1;
 
-        leftDriveMotor.setPower(maxSpeed);
-        rightDriveMotor.setPower(maxSpeed);
+        leftDriveMotor.setPower(lowSpeed);
+        rightDriveMotor.setPower(lowSpeed);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
@@ -284,8 +297,8 @@ public class EdgeBot {
 
             telemetry.update();
 
-            leftDriveMotor.setPower(maxSpeed);
-            rightDriveMotor.setPower(maxSpeed);
+            leftDriveMotor.setPower(currentSpeed);
+            rightDriveMotor.setPower(currentSpeed);
         }
     }
 
@@ -319,7 +332,7 @@ public class EdgeBot {
         rightDriveMotor.setPower(speed);
     }
 
-    public void rotateCounterClockwiseGyro(int degreesToRotate, double maxSpeed) {
+    public void rotateCounterClockwiseGyro(int degreesToRotate, double maxSpeed, Telemetry telemetry) {
         // Record initial heading
         double initialHeading = getRawGyroHeading();
 
@@ -357,6 +370,11 @@ public class EdgeBot {
             }
 
             rotateCounterClockwise(speed);
+
+            telemetry.addData("Initial heading", initialHeading);
+            telemetry.addData("Current Heading", getRawGyroHeading());
+            telemetry.addData("Target heading", targetHeading);
+            telemetry.update();
         }
 
         stopDriveMotors();
@@ -364,7 +382,7 @@ public class EdgeBot {
         setDriveMotorsRunUsingEncoders();
     }
 
-    public void rotateClockwiseGyro(int degreesToRotate, double maxSpeed) {
+    public void rotateClockwiseGyro(int degreesToRotate, double maxSpeed, Telemetry telemetry) {
         // Record initial heading
         double initialHeading = getRawGyroHeading();
 
@@ -402,6 +420,11 @@ public class EdgeBot {
             }
 
             rotateClockwise(speed);
+
+            telemetry.addData("Initial heading", initialHeading);
+            telemetry.addData("Current Heading", getRawGyroHeading());
+            telemetry.addData("Target heading", targetHeading);
+            telemetry.update();
         }
 
         stopDriveMotors();
@@ -455,12 +478,14 @@ public class EdgeBot {
         liftMotor.setPower(0);
 
         // Turn off RUN_TO_POSITION
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void robotLift(double power) {
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         liftMotor.setPower(power);
     }
 
@@ -472,10 +497,11 @@ public class EdgeBot {
     public void boomExtendStop() {
         boomExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         boomExtendMotor.setTargetPosition(boomExtendMotor.getCurrentPosition());
-        boomExtendMotor.setPower(0.6);
+        boomExtendMotor.setPower(0.5);
     }
 
     public void boomRotate(double power) {
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         boomRotateMotor.setPower(power);
     }
 
@@ -487,7 +513,15 @@ public class EdgeBot {
     public void boomAngleStop() {
         boomAngleMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         boomAngleMotor.setTargetPosition(boomAngleMotor.getCurrentPosition());
-        boomAngleMotor.setPower(1);
+        boomAngleMotor.setPower(0.5);
+    }
+
+    public void flipServoHold() {
+        flipServo.setPosition(0);
+    }
+
+    public void flipServoFlip() {
+        flipServo.setPosition(0.5);
     }
 
     public void leftServoRelease() {
@@ -547,11 +581,46 @@ public class EdgeBot {
         return angles.firstAngle;
     }
 
+    public void calibrateGyro() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+
+        imu.initialize(parameters);
+
+        while (!imu.isGyroCalibrated()) {
+            waitForTick(20);
+        }
+    }
+
     // Convert from inches to encoder counts
     public int inchToEncoder(double inches) {
         int counts = (int)Math.round(inches * Constants.Chassis.COUNTS_PER_INCH); // 39 encoder counts for one inch
 
         return counts;
+    }
+
+    public void initVuforia(HardwareMap hardwareMap) {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
+         */
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = Constants.Vision.VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+    }
+
+    public void initTfod(HardwareMap hardwareMap) {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(Constants.Vision.TFOD_MODEL_ASSET, Constants.Vision.LABEL_GOLD_MINERAL, Constants.Vision.LABEL_SILVER_MINERAL);
     }
 
 }

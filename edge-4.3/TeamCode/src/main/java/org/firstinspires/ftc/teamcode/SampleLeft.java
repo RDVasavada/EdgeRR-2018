@@ -51,8 +51,41 @@ public class SampleLeft extends LinearOpMode {
 
         waitForStart();
 
-        robot.rotateCounterClockwiseGyro(15, 0.3);
-        robot.driveForwardForSteps(560, 0.3, telemetry);
+        while (!robot.imu.isGyroCalibrated()) {
+            sleep(100);
+        }
+
+        robot.driveForwardForSteps(300, 0.2, telemetry);
+        robot.rotateCounterClockwiseGyro(35, 0.3, telemetry);
+        robot.driveForwardForSteps(700, 0.2, telemetry);
+
+        //robot.flipServoFlip();
+        sleep(500);
+        //robot.flipServoHold();
+
+        //robot.driveForwardForSteps(200, 0.2, telemetry);
+
+        robot.driveBackwardForSteps(600, 0.2, telemetry);
+
+        robot.calibrateGyro();
+        while (!robot.imu.isGyroCalibrated()) {
+            sleep(100);
+        }
+
+        robot.rotateCounterClockwiseGyro(55, 0.3, telemetry);
+        robot.driveForwardForSteps(800, 0.2, telemetry);
+
+        robot.calibrateGyro();
+        while (!robot.imu.isGyroCalibrated()) {
+            sleep(100);
+        }
+
+        robot.rotateCounterClockwiseGyro(90, 0.2 ,telemetry);
+
+        robot.driveForwardForSteps(800, 0.2, telemetry);
+        robot.rotateClockwiseGyro(90, 0.2, telemetry);
+
+        robot.driveForwardForSteps(800, 0.2, telemetry);
     }
 
 }
