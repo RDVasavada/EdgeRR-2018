@@ -56,36 +56,36 @@ public class SampleLeft extends LinearOpMode {
         }
 
         robot.driveForwardForSteps(300, 0.2, telemetry);
+        sleep(200);
         robot.rotateCounterClockwiseGyro(35, 0.3, telemetry);
-        robot.driveForwardForSteps(700, 0.2, telemetry);
+        sleep(200);
+        robot.driveForwardForSteps(650, 0.2, telemetry);
 
         //robot.flipServoFlip();
-        sleep(500);
+        sleep(200);
         //robot.flipServoHold();
 
-        //robot.driveForwardForSteps(200, 0.2, telemetry);
+        robot.driveBackwardForSteps(275, 0.2, telemetry);
+        sleep(200);
 
-        robot.driveBackwardForSteps(600, 0.2, telemetry);
+        robot.rotateCounterClockwiseGyro(50, 0.3, telemetry);
+        sleep(200);
+        robot.driveForwardForSteps(975, 0.2, telemetry);
+        sleep(200);
 
-        robot.calibrateGyro();
-        while (!robot.imu.isGyroCalibrated()) {
-            sleep(100);
-        }
+        robot.rotateCounterClockwiseGyro(85, 0.2 ,telemetry);
+        sleep(200);
 
-        robot.rotateCounterClockwiseGyro(55, 0.3, telemetry);
-        robot.driveForwardForSteps(800, 0.2, telemetry);
+        robot.driveForwardForSteps(2200, 0.3, telemetry);
+        sleep(200);
+        robot.rotateClockwiseGyro(100, 0.2, telemetry);
+        sleep(200);
 
-        robot.calibrateGyro();
-        while (!robot.imu.isGyroCalibrated()) {
-            sleep(100);
-        }
+        robot.driveForwardForSteps(1200, 0.3, telemetry);
 
-        robot.rotateCounterClockwiseGyro(90, 0.2 ,telemetry);
+        robot.rotateClockwiseGyro(30, 0.3, telemetry);
 
-        robot.driveForwardForSteps(800, 0.2, telemetry);
-        robot.rotateClockwiseGyro(90, 0.2, telemetry);
-
-        robot.driveForwardForSteps(800, 0.2, telemetry);
+        robot.driveBackwardForSteps(2000, 0.3, telemetry);
     }
 
 }

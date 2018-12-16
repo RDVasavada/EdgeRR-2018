@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareDeviceCloseOnTearDown;
@@ -29,15 +30,15 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 public class EdgeBot {
     // Declare drive motors
-    public DcMotor leftDriveMotor;
-    public DcMotor rightDriveMotor;
+    public DcMotorEx leftDriveMotor;
+    public DcMotorEx rightDriveMotor;
 
     // Declare functional motors
-    public DcMotor liftMotor;
+    public DcMotorEx liftMotor;
 
-    public DcMotor boomExtendMotor;
-    private DcMotor boomRotateMotor;
-    public DcMotor boomAngleMotor;
+    public DcMotorEx boomExtendMotor;
+    public DcMotorEx boomRotateMotor;
+    public DcMotorEx boomAngleMotor;
 
     // Declare drive servos
     private EdgeDriveServo frontLeftServo;
@@ -49,8 +50,10 @@ public class EdgeBot {
     private EdgeDriveServo[] driveServos = {frontLeftServo, frontRightServo, rearLeftServo, rearRightServo};
 
     // Declare other servos
-    private Servo leftClampServo;
-    private Servo rightClampServo;
+    private Servo rearClampServo;
+    private Servo frontClampServo;
+
+    private CRServo sweeperServo;
 
     private Servo flipServo;
 
@@ -66,6 +69,7 @@ public class EdgeBot {
     // Local OpMode members
     private HardwareMap hMap;
     private ElapsedTime localPeriod = new ElapsedTime();
+    private ElapsedTime armTimer = new ElapsedTime();
 
     // External Camera
     //public Camera externalCamera = null;
@@ -94,28 +98,27 @@ public class EdgeBot {
         //rearLeftServo = new EdgeDriveServo(hMap.crservo.get("rlservo"), hMap.analogInput.get("rlpot"));
         //rearRightServo = new EdgeDriveServo(hMap.crservo.get("rrservo"), hMap.analogInput.get("rrpot"));
 
+        sweeperServo = hMap.crservo.get("sweeper");
+
         flipServo = hMap.servo.get("flipservo");
 
-        leftClampServo = hMap.servo.get("lcservo");
-        leftClampServo.scaleRange(0.1, 0.9);
+        rearClampServo = hMap.servo.get("rcservo");
+        rearClampServo.scaleRange(0.1, 0.9);
 
-        rightClampServo = hMap.servo.get("rcservo");
-        rightClampServo.scaleRange(0.1, 0.9);
+        frontClampServo = hMap.servo.get("fcservo");
+        frontClampServo.scaleRange(0.1, 0.9);
 
         liftServo =  hMap.servo.get("liftservo");
 
         // Initialize drive motors
-        leftDriveMotor = hMap.dcMotor.get("ldmotor");
-        rightDriveMotor = hMap.dcMotor.get("rdmotor");
+        leftDriveMotor = (DcMotorEx)hMap.dcMotor.get("ldmotor");
+        rightDriveMotor = (DcMotorEx)hMap.dcMotor.get("rdmotor");
 
         // Initialize functional motors
-        liftMotor = hMap.dcMotor.get("liftmotor");
-
-        boomExtendMotor = hMap.dcMotor.get("extendmotor");
-
-        boomRotateMotor = hMap.dcMotor.get("rotatemotor");
-
-        boomAngleMotor = hMap.dcMotor.get("anglemotor");
+        liftMotor = (DcMotorEx)hMap.dcMotor.get("liftmotor");
+        boomExtendMotor = (DcMotorEx)hMap.dcMotor.get("extendmotor");
+        boomRotateMotor = (DcMotorEx)hMap.dcMotor.get("rotatemotor");
+        boomAngleMotor = (DcMotorEx)hMap.dcMotor.get("anglemotor");
 
         // Initialize the distance sensors
         bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
@@ -148,6 +151,11 @@ public class EdgeBot {
 
         // Reset the cycle clock for the next pass.
         localPeriod.reset();
+    }
+
+    // Resets the arm timer
+    public void resetArmTimer() {
+        armTimer.reset();
     }
 
     public void swerveDrive(double drive, double rotate, double swerve) {
@@ -229,31 +237,15 @@ public class EdgeBot {
         // Turn on RUN_TO_POSITION
         setDriveMotorsRunToPosition();
 
-        // Start motion
-        double lowSpeed = 0.1;
-
-        leftDriveMotor.setPower(lowSpeed);
-        rightDriveMotor.setPower(lowSpeed);
+        leftDriveMotor.setPower(maxSpeed);
+        rightDriveMotor.setPower(maxSpeed);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
-
-            double stepsToDo = ((leftDriveMotorTarget - leftDriveMotor.getCurrentPosition()) + (rightDriveMotorTarget - rightDriveMotor.getCurrentPosition())) / 2;
-            double progress = (numberOfSteps - stepsToDo) / numberOfSteps;
-
-            double currentSpeed = Math.sin((Math.PI) * progress) * maxSpeed + lowSpeed;
-            if (currentSpeed > maxSpeed) {
-                currentSpeed = maxSpeed;
-            }
-
-            telemetry.addData("progress", progress);
-            telemetry.addData("speed", currentSpeed);
-            telemetry.update();
-
-            leftDriveMotor.setPower(currentSpeed);
-            rightDriveMotor.setPower(currentSpeed);
         }
+
+        stopDriveMotors();
     }
 
     public void driveForwardForSteps(int numberOfSteps, double maxSpeed, Telemetry telemetry) {
@@ -272,34 +264,15 @@ public class EdgeBot {
         // Turn on RUN_TO_POSITION
         setDriveMotorsRunToPosition();
 
-        // Start motion
-        double lowSpeed = 0.1;
-
-        leftDriveMotor.setPower(lowSpeed);
-        rightDriveMotor.setPower(lowSpeed);
+        leftDriveMotor.setPower(maxSpeed);
+        rightDriveMotor.setPower(maxSpeed);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (leftDriveMotor.isBusy() && rightDriveMotor.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
-
-            double stepsToDo = ((leftDriveMotorTarget - leftDriveMotor.getCurrentPosition()) + (rightDriveMotorTarget - rightDriveMotor.getCurrentPosition())) / 2;
-            double progress = (numberOfSteps - stepsToDo) / numberOfSteps;
-
-            double currentSpeed = Math.sin((Math.PI) * progress) * maxSpeed + lowSpeed;
-            if (currentSpeed > maxSpeed) {
-                currentSpeed = maxSpeed;
-            }
-
-            telemetry.addData("progress", progress);
-            telemetry.addData("speed", maxSpeed);
-            telemetry.addData("left encoder steps to do", leftDriveMotorTarget - leftDriveMotor.getCurrentPosition());
-            telemetry.addData("right encoder steps to do", rightDriveMotorTarget - leftDriveMotor.getCurrentPosition());
-
-            telemetry.update();
-
-            leftDriveMotor.setPower(currentSpeed);
-            rightDriveMotor.setPower(currentSpeed);
         }
+
+        stopDriveMotors();
     }
 
     public void driveBackwardForInches(double inches, double speed, Telemetry telemetry) {
@@ -456,6 +429,20 @@ public class EdgeBot {
         rightDriveMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    // Set the arm motors to reset encoders
+    public void setArmMotorsResetEncoders() {
+        boomExtendMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        boomAngleMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        boomRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    // Set the arm motors to run to position
+    public void setArmMotorsRunToPosition() {
+        boomExtendMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        boomAngleMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
     public void robotLowerAuton() {
         liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -489,6 +476,49 @@ public class EdgeBot {
         liftMotor.setPower(power);
     }
 
+    public void armHomePosition() {
+        setArmMotorsRunToPosition();
+
+        // Set the target positions
+        boomExtendMotor.setTargetPosition(-2500);
+        boomAngleMotor.setTargetPosition(-300);
+        boomRotateMotor.setTargetPosition(-160);
+
+        boomExtendMotor.setPower(0.25);
+        boomAngleMotor.setPower(0.5);
+        boomRotateMotor.setPower(0.5);
+    }
+
+    public void armDownPosition() {
+        setArmMotorsRunToPosition();
+
+        // Set the target positions
+        boomExtendMotor.setTargetPosition(0);
+        boomAngleMotor.setTargetPosition(-300);
+        boomRotateMotor.setTargetPosition(-160);
+
+        boomExtendMotor.setPower(0.1);
+        boomAngleMotor.setPower(0.5);
+        boomRotateMotor.setPower(0.5);
+    }
+
+    public void armGoldPosition() {
+        setArmMotorsRunToPosition();
+
+        // Set the target positions
+        boomExtendMotor.setTargetPosition(-1705);
+        boomAngleMotor.setTargetPosition(191);
+        boomRotateMotor.setTargetPosition(550);
+
+        if (boomRotateMotor.getCurrentPosition() > 300) {
+
+        }
+
+        boomExtendMotor.setPower(0.25);
+        boomAngleMotor.setPower(0.5);
+        boomRotateMotor.setPower(0.5);
+    }
+
     public void boomExtend(double power) {
         boomExtendMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         boomExtendMotor.setPower(power);
@@ -513,7 +543,15 @@ public class EdgeBot {
     public void boomAngleStop() {
         boomAngleMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         boomAngleMotor.setTargetPosition(boomAngleMotor.getCurrentPosition());
-        boomAngleMotor.setPower(0.5);
+        boomAngleMotor.setPower(1);
+    }
+
+    public void intakeSweep() {
+        sweeperServo.setPower(-1);
+    }
+
+    public void intakeSweepStop() {
+        sweeperServo.setPower(0);
     }
 
     public void flipServoHold() {
@@ -524,20 +562,20 @@ public class EdgeBot {
         flipServo.setPosition(0.5);
     }
 
-    public void leftServoRelease() {
-        leftClampServo.setPosition(1);
+    public void rearServoRelease() {
+        rearClampServo.setPosition(1);
     }
 
-    public void leftServoClamp() {
-        leftClampServo.setPosition(0);
+    public void rearServoClamp() {
+        rearClampServo.setPosition(0);
     }
 
-    public void rightServoRelease() {
-        rightClampServo.setPosition(1);
+    public void frontServoRelease() {
+        frontClampServo.setPosition(1);
     }
 
-    public void rightServoClamp() {
-        rightClampServo.setPosition(0);
+    public void frontServoClamp() {
+        frontClampServo.setPosition(0);
     }
 
     public void liftServoRelease() {
@@ -597,7 +635,7 @@ public class EdgeBot {
 
     // Convert from inches to encoder counts
     public int inchToEncoder(double inches) {
-        int counts = (int)Math.round(inches * Constants.Chassis.COUNTS_PER_INCH); // 39 encoder counts for one inch
+        int counts = (int)Math.round(inches * Constants.Chassis.COUNTS_PER_INCH); // 37.4 encoder counts for one inch
 
         return counts;
     }

@@ -55,11 +55,35 @@ public class SampleRight extends LinearOpMode {
             sleep(100);
         }
 
-        robot.driveForwardForSteps(300, 0.2, telemetry);
+        robot.driveForwardForSteps(300, 0.3, telemetry);
+        sleep(200);
         robot.rotateClockwiseGyro(35, 0.3, telemetry);
-        robot.driveForwardForSteps(700, 0.2, telemetry);
+        sleep(200);
+        robot.driveForwardForSteps(650, 0.3, telemetry);
 
-        robot.driveForwardForSteps(200, 0.2, telemetry);
+        //robot.flipServoFlip();
+        sleep(500);
+        //robot.flipServoHold();
+
+        robot.driveBackwardForSteps(350, 0.3, telemetry);
+        sleep(200);
+
+        robot.rotateCounterClockwiseGyro(120, 0.3, telemetry);
+        sleep(200);
+        robot.driveForwardForSteps(1300, 0.3, telemetry);
+        sleep(200);
+
+        robot.rotateCounterClockwiseGyro(85, 0.2 ,telemetry);
+        sleep(200);
+
+        robot.driveForwardForSteps(1000, 0.3, telemetry);
+        sleep(200);
+        robot.rotateClockwiseGyro(110, 0.2, telemetry);
+        sleep(200);
+
+        robot.driveForwardForSteps(1200, 0.3, telemetry);
+
+        robot.rotateClockwiseGyro(15, 0.3, telemetry);
     }
 
 }

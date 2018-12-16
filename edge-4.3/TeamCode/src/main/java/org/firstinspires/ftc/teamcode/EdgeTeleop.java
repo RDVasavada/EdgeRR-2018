@@ -35,7 +35,10 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -46,22 +49,27 @@ public class EdgeTeleop extends LinearOpMode {
     EdgeBot robot;
 
     // For braking the arm motors
-    boolean extensionMotorIsStopped;
-    boolean angleMotorIsStopped;
+    boolean extensionMotorIsStopped = false;
+
+    boolean angleMotorIsStopped = false;
+
+    boolean armInPreset = false;
+    boolean armToLander = false;
+
+    // For the sweeper intake
+    boolean sweeperOn = false;
 
     @Override
     public void runOpMode() {
         robot = new EdgeBot();
         robot.init(hardwareMap, this);
 
+        robot.setArmMotorsResetEncoders();
+
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
 
         waitForStart();
-
-        int leftStartingCount = robot.leftDriveMotor.getCurrentPosition();
-        int rightStartingCount = robot.rightDriveMotor.getCurrentPosition();
-
 
         while(opModeIsActive()) {
             /* *** GamePad One *** */
@@ -73,8 +81,6 @@ public class EdgeTeleop extends LinearOpMode {
             robot.tankDrive(driveSpeed, rotateSpeed);
 
             robot.robotLift(liftSpeed);
-            telemetry.addData("Left count", robot.leftDriveMotor.getCurrentPosition() - leftStartingCount);
-            telemetry.addData("Right count", robot.rightDriveMotor.getCurrentPosition() - rightStartingCount);
 
             if (gamepad1.a) {
                 robot.liftServoClamp();
@@ -83,53 +89,86 @@ public class EdgeTeleop extends LinearOpMode {
             }
 
             /* *** GamePad Two *** */
-            double boomAngleSpeed = gamepad2.right_stick_y;
-            double boomRotateSpeed = gamepad2.right_stick_x;
-            double boomExtendSpeed = (gamepad2.right_trigger - gamepad2.left_trigger) * 0.5;
+            double boomAngleSpeed = gamepad2.right_stick_y * -0.8;
+            double boomRotateSpeed = gamepad2.right_stick_x / 2;
+            double boomExtendSpeed = (gamepad2.left_stick_y) * -0.25;
 
-            if (!(Math.abs(boomAngleSpeed) < 0.1)) {
+            if (gamepad2.dpad_up) {
+                robot.armHomePosition();
+                armInPreset = true;
+                armToLander = false;
+            } else if (gamepad2.dpad_down) {
+                robot.armDownPosition();
+                armInPreset = true;
+                armToLander = false;
+            } else if (gamepad2.dpad_right) {
+                robot.armGoldPosition();
+                armInPreset = true;
+
+                if (!armToLander) {
+                    robot.resetArmTimer();
+                    armToLander = true;
+                }
+            }
+
+            if (Math.abs(boomAngleSpeed) > 0.05) {
                 robot.boomAngle(boomAngleSpeed);
                 angleMotorIsStopped = false;
-            } else if (!angleMotorIsStopped) {
-                //robot.boomAngleStop();
-                robot.boomAngle(0);
+                armInPreset = false;
+                armToLander = false;
+            } else if (!angleMotorIsStopped && !armInPreset) {
+                robot.boomAngleStop();
                 angleMotorIsStopped = true;
             }
 
-            telemetry.addData("Angle motor voltage", robot.boomAngleMotor.getPower());
-            telemetry.addData("Angle motor current position", robot.boomAngleMotor.getCurrentPosition());
-            telemetry.addData("Angle motor target", robot.boomAngleMotor.getTargetPosition());
+            PIDFCoefficients angleMotorPid = robot.boomAngleMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
 
-            robot.boomRotate(boomRotateSpeed);
+            telemetry.addData("Angle motor p", angleMotorPid.p);
+            telemetry.addData("Angle motor i", angleMotorPid.i);
+            telemetry.addData("Angle motor d", angleMotorPid.d);
+
+            telemetry.addData("Angle motor count", robot.boomAngleMotor.getCurrentPosition());
+            telemetry.addData("Extend motor count", robot.boomExtendMotor.getCurrentPosition());
+            telemetry.addData("Rotate motor count", robot.boomRotateMotor.getCurrentPosition());
+
+            if (Math.abs(boomRotateSpeed) > 0.05) {
+                robot.boomRotate(boomRotateSpeed);
+                armInPreset = false;
+                armToLander = false;
+            }  else if (!armInPreset) {
+                robot.boomRotate(0);
+            }
 
             if (boomExtendSpeed != 0) {
                 robot.boomExtend(boomExtendSpeed);
                 extensionMotorIsStopped = false;
-            } else if (!extensionMotorIsStopped) {
-                //robot.boomExtendStop();
-                robot.boomExtend(0);
+                armInPreset = false;
+                armToLander = false;
+            } else if (!extensionMotorIsStopped && !armInPreset) {
+                robot.boomExtendStop();
                 extensionMotorIsStopped = true;
             }
 
-            telemetry.addData("Extend motor voltage", robot.boomExtendMotor.getPower());
-            telemetry.addData("Extend motor current position", robot.boomExtendMotor.getCurrentPosition());
-            telemetry.addData("Extend motor target", robot.boomExtendMotor.getTargetPosition());
+            PIDFCoefficients extendMotorPid = robot.boomAngleMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
 
-            if (gamepad2.a) {
-                robot.rightServoRelease();
-                telemetry.addData("Right Servo", "release");
-            } else if (gamepad2.b) {
-                robot.rightServoClamp();
-                telemetry.addData("Right Servo", "clamp");
-            } else if (gamepad2.x) {
-                robot.leftServoRelease();
-                telemetry.addData("Left Servo", "release");
-            } else if (gamepad2.y) {
-                robot.leftServoClamp();
-                telemetry.addData("Left Servo", "clamp");
+            telemetry.addData("Extend motor p", extendMotorPid.p);
+            telemetry.addData("Extend motor i", extendMotorPid.i);
+
+            if (gamepad2.right_bumper) {
+                robot.intakeSweep();
+            } else if (gamepad2.left_bumper) {
+                robot.intakeSweepStop();
             }
 
-            telemetry.addData("gryo", robot.getRawGyroHeading());
+            if (gamepad2.a) {
+                robot.frontServoRelease();
+            } else if (gamepad2.b) {
+                robot.frontServoClamp();
+            } else if (gamepad2.x) {
+                robot.rearServoRelease();
+            } else if (gamepad2.y) {
+                robot.rearServoClamp();
+            }
 
             telemetry.update();
         }

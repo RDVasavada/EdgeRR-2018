@@ -51,7 +51,7 @@ public class SampleCenter extends LinearOpMode {
 
         waitForStart();
 
-        robot.driveForwardForSteps(560, 0.3, telemetry);
+        robot.driveForwardForInches(12, 0.3, telemetry);
     }
 
 }
