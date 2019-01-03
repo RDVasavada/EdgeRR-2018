@@ -40,6 +40,8 @@ public class EdgeBot {
     public DcMotorEx boomRotateMotor;
     public DcMotorEx boomAngleMotor;
 
+    public DcMotorEx deploymentMotor;
+
     // Declare drive servos
     private EdgeDriveServo frontLeftServo;
     private EdgeDriveServo frontRightServo;
@@ -50,10 +52,8 @@ public class EdgeBot {
     private EdgeDriveServo[] driveServos = {frontLeftServo, frontRightServo, rearLeftServo, rearRightServo};
 
     // Declare other servos
-    private Servo rearClampServo;
-    private Servo frontClampServo;
-
-    private CRServo sweeperServo;
+    private CRServo leftSweeperServo;
+    private CRServo rightSweeperServo;
 
     private Servo flipServo;
 
@@ -81,6 +81,13 @@ public class EdgeBot {
     // A reference to the current opMode
     public LinearOpMode currentOpmode;
 
+    // Encoder values for the arm
+    private int extendHome;
+    private int rotateHome;
+    private int angleHome;
+
+    protected boolean homeSet = false;
+
     // Constructor
     public EdgeBot() {
 
@@ -98,15 +105,10 @@ public class EdgeBot {
         //rearLeftServo = new EdgeDriveServo(hMap.crservo.get("rlservo"), hMap.analogInput.get("rlpot"));
         //rearRightServo = new EdgeDriveServo(hMap.crservo.get("rrservo"), hMap.analogInput.get("rrpot"));
 
-        sweeperServo = hMap.crservo.get("sweeper");
+        leftSweeperServo = hMap.crservo.get("lsweeper");
+        rightSweeperServo = hMap.crservo.get("rsweeper");
 
         flipServo = hMap.servo.get("flipservo");
-
-        rearClampServo = hMap.servo.get("rcservo");
-        rearClampServo.scaleRange(0.1, 0.9);
-
-        frontClampServo = hMap.servo.get("fcservo");
-        frontClampServo.scaleRange(0.1, 0.9);
 
         liftServo =  hMap.servo.get("liftservo");
 
@@ -119,6 +121,7 @@ public class EdgeBot {
         boomExtendMotor = (DcMotorEx)hMap.dcMotor.get("extendmotor");
         boomRotateMotor = (DcMotorEx)hMap.dcMotor.get("rotatemotor");
         boomAngleMotor = (DcMotorEx)hMap.dcMotor.get("anglemotor");
+        deploymentMotor = (DcMotorEx)hMap.dcMotor.get("deploymotor");
 
         // Initialize the distance sensors
         bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
@@ -477,46 +480,71 @@ public class EdgeBot {
     }
 
     public void armHomePosition() {
-        setArmMotorsRunToPosition();
+        if (homeSet) {
+            setArmMotorsRunToPosition();
 
-        // Set the target positions
-        boomExtendMotor.setTargetPosition(-2500);
-        boomAngleMotor.setTargetPosition(-300);
-        boomRotateMotor.setTargetPosition(-160);
+            // Set the target positions
+            boomRotateMotor.setTargetPosition(rotateHome);
+            boomAngleMotor.setTargetPosition(angleHome);
+            boomExtendMotor.setTargetPosition(extendHome);
 
-        boomExtendMotor.setPower(0.25);
-        boomAngleMotor.setPower(0.5);
-        boomRotateMotor.setPower(0.5);
+            boomRotateMotor.setPower(0.3);
+            boomExtendMotor.setPower(0.2);
+            boomAngleMotor.setPower(0.5);
+        }
     }
 
     public void armDownPosition() {
-        setArmMotorsRunToPosition();
+        if (homeSet) {
+            setArmMotorsRunToPosition();
 
-        // Set the target positions
-        boomExtendMotor.setTargetPosition(0);
-        boomAngleMotor.setTargetPosition(-300);
-        boomRotateMotor.setTargetPosition(-160);
+            // Set the target positions
+            boomExtendMotor.setTargetPosition(extendHome);
+            boomAngleMotor.setTargetPosition(angleHome - 300);
+            boomRotateMotor.setTargetPosition(rotateHome);
 
-        boomExtendMotor.setPower(0.1);
-        boomAngleMotor.setPower(0.5);
-        boomRotateMotor.setPower(0.5);
+            boomExtendMotor.setPower(0.1);
+            boomAngleMotor.setPower(0.5);
+            boomRotateMotor.setPower(0.5);
+        }
     }
 
     public void armGoldPosition() {
-        setArmMotorsRunToPosition();
+        if (homeSet) {
+            setArmMotorsRunToPosition();
 
-        // Set the target positions
-        boomExtendMotor.setTargetPosition(-1705);
-        boomAngleMotor.setTargetPosition(191);
-        boomRotateMotor.setTargetPosition(550);
+            // Set the target positions
+            boomRotateMotor.setTargetPosition(rotateHome + 600);
 
-        if (boomRotateMotor.getCurrentPosition() > 300) {
+            /*
+            if (boomRotateMotor.getCurrentPosition() > 40) {
+                boomAngleMotor.setTargetPosition(200);
+                boomAngleMotor.setPower(0.5);
+            }
 
+            if (boomRotateMotor.getCurrentPosition() > 200) {
+                boomExtendMotor.setTargetPosition(-1705);
+                boomExtendMotor.setPower(0.25);
+            }
+            */
+
+            boomAngleMotor.setTargetPosition(angleHome + 5700);
+            boomExtendMotor.setTargetPosition(extendHome - 275);
+
+            boomAngleMotor.setPower(0.5);
+            boomExtendMotor.setPower(0.25);
+            boomRotateMotor.setPower(0.3);
         }
+    }
 
-        boomExtendMotor.setPower(0.25);
-        boomAngleMotor.setPower(0.5);
-        boomRotateMotor.setPower(0.5);
+    public void setArmHome() {
+        setArmMotorsResetEncoders();
+
+        extendHome = boomExtendMotor.getCurrentPosition();
+        rotateHome = boomRotateMotor.getCurrentPosition();
+        angleHome = boomAngleMotor.getCurrentPosition();
+
+        homeSet = true;
     }
 
     public void boomExtend(double power) {
@@ -540,18 +568,28 @@ public class EdgeBot {
         boomAngleMotor.setPower(power);
     }
 
-    public void boomAngleStop() {
-        boomAngleMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        boomAngleMotor.setTargetPosition(boomAngleMotor.getCurrentPosition());
-        boomAngleMotor.setPower(1);
+    public void leftIntakeSweep() {
+        leftSweeperServo.setPower(-1);
     }
 
-    public void intakeSweep() {
-        sweeperServo.setPower(-1);
+    public void leftIntakeStop() {
+        leftSweeperServo.setPower(0);
     }
 
-    public void intakeSweepStop() {
-        sweeperServo.setPower(0);
+    public void leftIntakeReverse() {
+        leftSweeperServo.setPower(1);
+    }
+
+    public void rightIntakeSweep() {
+        rightSweeperServo.setPower(1);
+    }
+
+    public void rightIntakeStop() {
+        rightSweeperServo.setPower(0);
+    }
+
+    public void rightIntakeReverse() {
+        rightSweeperServo.setPower(-1);
     }
 
     public void flipServoHold() {
@@ -560,22 +598,6 @@ public class EdgeBot {
 
     public void flipServoFlip() {
         flipServo.setPosition(0.5);
-    }
-
-    public void rearServoRelease() {
-        rearClampServo.setPosition(1);
-    }
-
-    public void rearServoClamp() {
-        rearClampServo.setPosition(0);
-    }
-
-    public void frontServoRelease() {
-        frontClampServo.setPosition(1);
-    }
-
-    public void frontServoClamp() {
-        frontClampServo.setPosition(0);
     }
 
     public void liftServoRelease() {

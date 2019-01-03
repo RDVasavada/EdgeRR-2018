@@ -51,13 +51,18 @@ public class EdgeTeleop extends LinearOpMode {
     // For braking the arm motors
     boolean extensionMotorIsStopped = false;
 
-    boolean angleMotorIsStopped = false;
-
     boolean armInPreset = false;
     boolean armToLander = false;
 
-    // For the sweeper intake
-    boolean sweeperOn = false;
+    // For the sweeper intake (-1 reverse, 0 stop, 1 forwards)
+    int leftSweeperPos = 0;
+    int leftSweeperToggle = 1;
+
+    int rightSweeperPos = 0;
+    int rightSweeperToggle = 1;
+
+    boolean leftBumperPressed = false;
+    boolean rightBumperPressed = false;
 
     @Override
     public void runOpMode() {
@@ -89,52 +94,36 @@ public class EdgeTeleop extends LinearOpMode {
             }
 
             /* *** GamePad Two *** */
-            double boomAngleSpeed = gamepad2.right_stick_y * -0.8;
+            double boomAngleSpeed = gamepad2.right_stick_y * -1;
             double boomRotateSpeed = gamepad2.right_stick_x / 2;
             double boomExtendSpeed = (gamepad2.left_stick_y) * -0.25;
 
             if (gamepad2.dpad_up) {
                 robot.armHomePosition();
                 armInPreset = true;
-                armToLander = false;
             } else if (gamepad2.dpad_down) {
                 robot.armDownPosition();
                 armInPreset = true;
-                armToLander = false;
             } else if (gamepad2.dpad_right) {
                 robot.armGoldPosition();
                 armInPreset = true;
-
-                if (!armToLander) {
-                    robot.resetArmTimer();
-                    armToLander = true;
-                }
             }
 
             if (Math.abs(boomAngleSpeed) > 0.05) {
                 robot.boomAngle(boomAngleSpeed);
-                angleMotorIsStopped = false;
                 armInPreset = false;
-                armToLander = false;
-            } else if (!angleMotorIsStopped && !armInPreset) {
-                robot.boomAngleStop();
-                angleMotorIsStopped = true;
+            } else if (!armInPreset) {
+                robot.boomAngle(0);
             }
-
-            PIDFCoefficients angleMotorPid = robot.boomAngleMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
-
-            telemetry.addData("Angle motor p", angleMotorPid.p);
-            telemetry.addData("Angle motor i", angleMotorPid.i);
-            telemetry.addData("Angle motor d", angleMotorPid.d);
 
             telemetry.addData("Angle motor count", robot.boomAngleMotor.getCurrentPosition());
             telemetry.addData("Extend motor count", robot.boomExtendMotor.getCurrentPosition());
+            telemetry.addData("Extend motor target", robot.boomExtendMotor.getTargetPosition());
             telemetry.addData("Rotate motor count", robot.boomRotateMotor.getCurrentPosition());
 
             if (Math.abs(boomRotateSpeed) > 0.05) {
                 robot.boomRotate(boomRotateSpeed);
                 armInPreset = false;
-                armToLander = false;
             }  else if (!armInPreset) {
                 robot.boomRotate(0);
             }
@@ -143,31 +132,92 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.boomExtend(boomExtendSpeed);
                 extensionMotorIsStopped = false;
                 armInPreset = false;
-                armToLander = false;
             } else if (!extensionMotorIsStopped && !armInPreset) {
                 robot.boomExtendStop();
                 extensionMotorIsStopped = true;
             }
 
-            PIDFCoefficients extendMotorPid = robot.boomAngleMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
+            PIDFCoefficients extendPID = robot.boomExtendMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
+            extendPID.d = 2;
+            robot.boomExtendMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, extendPID);
 
-            telemetry.addData("Extend motor p", extendMotorPid.p);
-            telemetry.addData("Extend motor i", extendMotorPid.i);
+            telemetry.addData("Extend motor p", extendPID.p);
+            telemetry.addData("Extend motor i", extendPID.i);
+            telemetry.addData("Extend motor d", extendPID.d);
+            telemetry.addData("Extend motor tolerance", robot.boomExtendMotor.getTargetPositionTolerance());
+
+            /*
+            if (gamepad2.left_bumper) {
+                if (!leftBumperPressed) {
+                    if (leftSweeperPos == -1) {
+                        robot.leftIntakeStop();
+                        leftSweeperPos = 0;
+                        leftSweeperToggle = 1;
+                    } else if (leftSweeperPos == 0) {
+                        if (leftSweeperToggle == -1) {
+                            robot.leftIntakeReverse();
+                            leftSweeperPos = -1;
+                        } else if (leftSweeperToggle == 1) {
+                            robot.leftIntakeSweep();
+                            leftSweeperPos = 1;
+                        }
+                    } else if (leftSweeperPos == 1) {
+                        robot.leftIntakeStop();
+                        leftSweeperPos = 0;
+                        leftSweeperToggle = -1;
+                    }
+                }
+
+                leftBumperPressed = true;
+            } else {
+                leftBumperPressed = false;
+            }
 
             if (gamepad2.right_bumper) {
-                robot.intakeSweep();
+                if (!rightBumperPressed) {
+                    if (rightSweeperPos == -1) {
+                        robot.rightIntakeStop();
+                        rightSweeperPos = 0;
+                        rightSweeperToggle = 1;
+                    } else if (rightSweeperPos == 0) {
+                        if (rightSweeperToggle == -1) {
+                            robot.rightIntakeReverse();
+                            rightSweeperPos = -1;
+                        } else if (rightSweeperToggle == 1) {
+                            robot.rightIntakeSweep();
+                            rightSweeperPos = 1;
+                        }
+                    } else if (rightSweeperPos == 1) {
+                        robot.rightIntakeStop();
+                        rightSweeperPos = 0;
+                        rightSweeperToggle = -1;
+                    }
+                }
+
+                rightBumperPressed = true;
+            } else {
+                rightBumperPressed = false;
+            }
+            */
+
+            if (gamepad2.left_trigger > 0) {
+                robot.leftIntakeReverse();
             } else if (gamepad2.left_bumper) {
-                robot.intakeSweepStop();
+                robot.leftIntakeSweep();
+            } else if (gamepad2.x) {
+                robot.leftIntakeStop();
+            }
+
+            if (gamepad2.right_trigger > 0) {
+                robot.rightIntakeReverse();
+            } else if (gamepad2.right_bumper) {
+                robot.rightIntakeSweep();
+            } else if (gamepad2.b) {
+                robot.rightIntakeStop();
             }
 
             if (gamepad2.a) {
-                robot.frontServoRelease();
-            } else if (gamepad2.b) {
-                robot.frontServoClamp();
-            } else if (gamepad2.x) {
-                robot.rearServoRelease();
-            } else if (gamepad2.y) {
-                robot.rearServoClamp();
+                robot.setArmHome();
             }
 
             telemetry.update();
