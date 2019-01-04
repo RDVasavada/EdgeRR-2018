@@ -54,15 +54,15 @@ public class EdgeTeleop extends LinearOpMode {
     boolean armInPreset = false;
     boolean armToLander = false;
 
-    // For the sweeper intake (-1 reverse, 0 stop, 1 forwards)
-    int leftSweeperPos = 0;
-    int leftSweeperToggle = 1;
-
-    int rightSweeperPos = 0;
-    int rightSweeperToggle = 1;
+    // For the intake
+    boolean leftIntakeOn = false;
+    boolean rightIntakeOn = false;
 
     boolean leftBumperPressed = false;
     boolean rightBumperPressed = false;
+
+    boolean leftTriggerPressed = false;
+    boolean rightTriggerPressed = false;
 
     @Override
     public void runOpMode() {
@@ -95,17 +95,23 @@ public class EdgeTeleop extends LinearOpMode {
 
             /* *** GamePad Two *** */
             double boomAngleSpeed = gamepad2.right_stick_y * -1;
-            double boomRotateSpeed = gamepad2.right_stick_x / 2;
             double boomExtendSpeed = (gamepad2.left_stick_y) * -0.25;
+            double boomRotateSpeed = 0;
+
+            if (Math.abs(gamepad2.left_stick_x) > 0) {
+                boomRotateSpeed = gamepad2.left_stick_x * 0.4;
+            } else if (Math.abs(gamepad2.right_stick_x) > 0) {
+                boomRotateSpeed = gamepad2.right_stick_x;
+            }
 
             if (gamepad2.dpad_up) {
                 robot.armHomePosition();
                 armInPreset = true;
-            } else if (gamepad2.dpad_down) {
-                robot.armDownPosition();
+            } else if (gamepad2.dpad_left) {
+                robot.armSilverPosition();
                 armInPreset = true;
             } else if (gamepad2.dpad_right) {
-                robot.armGoldPosition();
+                robot.armGoldPosition(telemetry);
                 armInPreset = true;
             }
 
@@ -121,10 +127,10 @@ public class EdgeTeleop extends LinearOpMode {
             telemetry.addData("Extend motor target", robot.boomExtendMotor.getTargetPosition());
             telemetry.addData("Rotate motor count", robot.boomRotateMotor.getCurrentPosition());
 
-            if (Math.abs(boomRotateSpeed) > 0.05) {
+            if (Math.abs(boomRotateSpeed) > 0) {
                 robot.boomRotate(boomRotateSpeed);
                 armInPreset = false;
-            }  else if (!armInPreset) {
+            } else if (!armInPreset) {
                 robot.boomRotate(0);
             }
 
@@ -138,86 +144,90 @@ public class EdgeTeleop extends LinearOpMode {
             }
 
             PIDFCoefficients extendPID = robot.boomExtendMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
-            extendPID.d = 2;
+            extendPID.p = 10;
+            extendPID.i = 0;
+            extendPID.d = 4;
             robot.boomExtendMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, extendPID);
+            robot.boomExtendMotor.setTargetPositionTolerance(5);
 
             telemetry.addData("Extend motor p", extendPID.p);
             telemetry.addData("Extend motor i", extendPID.i);
             telemetry.addData("Extend motor d", extendPID.d);
             telemetry.addData("Extend motor tolerance", robot.boomExtendMotor.getTargetPositionTolerance());
 
-            /*
-            if (gamepad2.left_bumper) {
-                if (!leftBumperPressed) {
-                    if (leftSweeperPos == -1) {
+            if (gamepad2.left_trigger > 0) {
+                if (!leftTriggerPressed) {
+                    if (leftIntakeOn) {
                         robot.leftIntakeStop();
-                        leftSweeperPos = 0;
-                        leftSweeperToggle = 1;
-                    } else if (leftSweeperPos == 0) {
-                        if (leftSweeperToggle == -1) {
-                            robot.leftIntakeReverse();
-                            leftSweeperPos = -1;
-                        } else if (leftSweeperToggle == 1) {
-                            robot.leftIntakeSweep();
-                            leftSweeperPos = 1;
-                        }
-                    } else if (leftSweeperPos == 1) {
-                        robot.leftIntakeStop();
-                        leftSweeperPos = 0;
-                        leftSweeperToggle = -1;
+                        leftIntakeOn = false;
+                    } else {
+                        robot.leftIntakeReverse();
+                        leftIntakeOn = true;
                     }
-                }
 
-                leftBumperPressed = true;
+                    leftTriggerPressed = true;
+                }
+            } else if (gamepad2.left_bumper) {
+                if (!leftBumperPressed) {
+                    if (leftIntakeOn) {
+                        robot.leftIntakeStop();
+                        leftIntakeOn = false;
+                    } else {
+                        robot.leftIntakeSweep();
+                        leftIntakeOn = true;
+                    }
+
+                    leftBumperPressed = true;
+                }
             } else {
+                leftTriggerPressed = false;
                 leftBumperPressed = false;
             }
 
-            if (gamepad2.right_bumper) {
-                if (!rightBumperPressed) {
-                    if (rightSweeperPos == -1) {
+            if (gamepad2.right_trigger > 0) {
+                if (!rightTriggerPressed) {
+                    if (rightIntakeOn) {
                         robot.rightIntakeStop();
-                        rightSweeperPos = 0;
-                        rightSweeperToggle = 1;
-                    } else if (rightSweeperPos == 0) {
-                        if (rightSweeperToggle == -1) {
-                            robot.rightIntakeReverse();
-                            rightSweeperPos = -1;
-                        } else if (rightSweeperToggle == 1) {
-                            robot.rightIntakeSweep();
-                            rightSweeperPos = 1;
-                        }
-                    } else if (rightSweeperPos == 1) {
-                        robot.rightIntakeStop();
-                        rightSweeperPos = 0;
-                        rightSweeperToggle = -1;
+                        rightIntakeOn = false;
+                    } else {
+                        robot.rightIntakeReverse();
+                        rightIntakeOn = true;
                     }
-                }
 
-                rightBumperPressed = true;
+                    rightTriggerPressed = true;
+                }
+            } else if (gamepad2.right_bumper) {
+                if (!rightBumperPressed) {
+                    if (rightIntakeOn) {
+                        robot.rightIntakeStop();
+                        rightIntakeOn = false;
+                    } else {
+                        robot.leftIntakeSweep();
+                        rightIntakeOn = true;
+                    }
+
+                    rightIntakeOn = true;
+                }
             } else {
+                rightTriggerPressed = false;
                 rightBumperPressed = false;
             }
-            */
 
-            if (gamepad2.left_trigger > 0) {
-                robot.leftIntakeReverse();
-            } else if (gamepad2.left_bumper) {
-                robot.leftIntakeSweep();
-            } else if (gamepad2.x) {
+            if (gamepad2.y) {
                 robot.leftIntakeStop();
-            }
-
-            if (gamepad2.right_trigger > 0) {
-                robot.rightIntakeReverse();
-            } else if (gamepad2.right_bumper) {
-                robot.rightIntakeSweep();
-            } else if (gamepad2.b) {
                 robot.rightIntakeStop();
             }
 
             if (gamepad2.a) {
                 robot.setArmHome();
+            }
+
+            if (gamepad2.x) {
+                robot.setArmSilver();
+            }
+
+            if (gamepad2.b) {
+                robot.setArmGold();
             }
 
             telemetry.update();

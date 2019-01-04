@@ -30,17 +30,17 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 public class EdgeBot {
     // Declare drive motors
-    public DcMotorEx leftDriveMotor;
-    public DcMotorEx rightDriveMotor;
+    protected DcMotorEx leftDriveMotor;
+    protected DcMotorEx rightDriveMotor;
 
     // Declare functional motors
-    public DcMotorEx liftMotor;
+    protected DcMotorEx liftMotor;
 
-    public DcMotorEx boomExtendMotor;
-    public DcMotorEx boomRotateMotor;
-    public DcMotorEx boomAngleMotor;
+    protected DcMotorEx boomExtendMotor;
+    protected DcMotorEx boomRotateMotor;
+    protected DcMotorEx boomAngleMotor;
 
-    public DcMotorEx deploymentMotor;
+    protected DcMotorEx deploymentMotor;
 
     // Declare drive servos
     private EdgeDriveServo frontLeftServo;
@@ -64,7 +64,7 @@ public class EdgeBot {
     private DistanceSensor topDistanceSensor;
 
     // Declare imu (inertial motion unit)
-    public BNO055IMU imu;
+    protected BNO055IMU imu;
 
     // Local OpMode members
     private HardwareMap hMap;
@@ -86,7 +86,17 @@ public class EdgeBot {
     private int rotateHome;
     private int angleHome;
 
+    private int extendSilver;
+    private int rotateSilver;
+    private int angleSilver;
+
+    private int extendGold;
+    private int rotateGold;
+    private int angleGold;
+
     protected boolean homeSet = false;
+    protected boolean silverSet = false;
+    protected boolean goldSet = false;
 
     // Constructor
     public EdgeBot() {
@@ -480,71 +490,114 @@ public class EdgeBot {
     }
 
     public void armHomePosition() {
-        if (homeSet) {
+        if (goldSet && homeSet) {
             setArmMotorsRunToPosition();
 
-            // Set the target positions
-            boomRotateMotor.setTargetPosition(rotateHome);
-            boomAngleMotor.setTargetPosition(angleHome);
-            boomExtendMotor.setTargetPosition(extendHome);
+            int extendDistance = extendGold - extendHome;
+            int angleDistance = angleGold - angleHome;
+            int rotateDistance = rotateGold - rotateHome;
 
-            boomRotateMotor.setPower(0.3);
-            boomExtendMotor.setPower(0.2);
-            boomAngleMotor.setPower(0.5);
+            boomRotateMotor.setTargetPosition(rotateHome);
+
+            if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.4);
+
+                boomExtendMotor.setTargetPosition(extendHome - 450);
+                boomExtendMotor.setPower(0.3);
+            } else if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance / 4)) {
+                boomRotateMotor.setPower(0.7);
+
+                boomAngleMotor.setTargetPosition(angleHome);
+                boomAngleMotor.setPower(1);
+            } else {
+                boomRotateMotor.setPower(0.2);
+
+                boomExtendMotor.setTargetPosition(extendHome);
+                boomExtendMotor.setPower(0.15);
+            }
         }
     }
 
-    public void armDownPosition() {
-        if (homeSet) {
+    public void armSilverPosition() {
+        if (goldSet && homeSet) {
             setArmMotorsRunToPosition();
 
-            // Set the target positions
-            boomExtendMotor.setTargetPosition(extendHome);
-            boomAngleMotor.setTargetPosition(angleHome - 300);
-            boomRotateMotor.setTargetPosition(rotateHome);
+            int extendDistance = extendSilver - extendHome;
+            int angleDistance = angleSilver - angleHome;
+            int rotateDistance = rotateSilver - rotateHome;
 
-            boomExtendMotor.setPower(0.1);
-            boomAngleMotor.setPower(0.5);
-            boomRotateMotor.setPower(0.5);
+            boomRotateMotor.setTargetPosition(rotateSilver);
+
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance / 4)) {
+                boomRotateMotor.setPower(0.4);
+
+                boomExtendMotor.setTargetPosition(extendHome - 450);
+                boomExtendMotor.setPower(0.3);
+            } else if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.7);
+
+                boomAngleMotor.setTargetPosition(angleSilver);
+                boomAngleMotor.setPower(1);
+            } else {
+                boomRotateMotor.setPower(0.2);
+
+                boomExtendMotor.setTargetPosition(extendSilver);
+                boomExtendMotor.setPower(0.15);
+            }
         }
     }
 
-    public void armGoldPosition() {
-        if (homeSet) {
+    public void armGoldPosition(Telemetry telemetry) {
+        if (goldSet && homeSet) {
             setArmMotorsRunToPosition();
 
-            // Set the target positions
-            boomRotateMotor.setTargetPosition(rotateHome + 600);
+            int extendDistance = extendGold - extendHome;
+            int angleDistance = angleGold - angleHome;
+            int rotateDistance = rotateGold - rotateHome;
 
-            /*
-            if (boomRotateMotor.getCurrentPosition() > 40) {
-                boomAngleMotor.setTargetPosition(200);
-                boomAngleMotor.setPower(0.5);
+            boomRotateMotor.setTargetPosition(rotateGold);
+
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance / 4)) {
+                boomRotateMotor.setPower(0.4);
+
+                boomExtendMotor.setTargetPosition(extendHome - 450);
+                boomExtendMotor.setPower(0.3);
+            } else if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.7);
+
+                boomAngleMotor.setTargetPosition(angleGold);
+                boomAngleMotor.setPower(1);
+            } else {
+                boomRotateMotor.setPower(0.2);
+
+                boomExtendMotor.setTargetPosition(extendGold);
+                boomExtendMotor.setPower(0.15);
             }
-
-            if (boomRotateMotor.getCurrentPosition() > 200) {
-                boomExtendMotor.setTargetPosition(-1705);
-                boomExtendMotor.setPower(0.25);
-            }
-            */
-
-            boomAngleMotor.setTargetPosition(angleHome + 5700);
-            boomExtendMotor.setTargetPosition(extendHome - 275);
-
-            boomAngleMotor.setPower(0.5);
-            boomExtendMotor.setPower(0.25);
-            boomRotateMotor.setPower(0.3);
         }
     }
 
     public void setArmHome() {
-        setArmMotorsResetEncoders();
-
         extendHome = boomExtendMotor.getCurrentPosition();
         rotateHome = boomRotateMotor.getCurrentPosition();
         angleHome = boomAngleMotor.getCurrentPosition();
 
         homeSet = true;
+    }
+
+    public void setArmSilver() {
+        extendSilver = boomExtendMotor.getCurrentPosition();
+        rotateSilver = boomRotateMotor.getCurrentPosition();
+        angleSilver = boomAngleMotor.getCurrentPosition();
+
+        silverSet = true;
+    }
+
+    public void setArmGold() {
+        extendGold = boomExtendMotor.getCurrentPosition();
+        rotateGold = boomRotateMotor.getCurrentPosition();
+        angleGold = boomAngleMotor.getCurrentPosition();
+
+        goldSet = true;
     }
 
     public void boomExtend(double power) {
