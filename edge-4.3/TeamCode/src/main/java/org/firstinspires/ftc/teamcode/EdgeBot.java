@@ -500,11 +500,11 @@ public class EdgeBot {
             boomRotateMotor.setTargetPosition(rotateHome);
 
             if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance * 0.7)) {
-                boomRotateMotor.setPower(0.4);
+                boomRotateMotor.setPower(0.6);
 
-                boomExtendMotor.setTargetPosition(extendHome - 450);
+                boomExtendMotor.setTargetPosition(extendSilver);
                 boomExtendMotor.setPower(0.3);
-            } else if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance / 4)) {
+            } else if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance / 3)) {
                 boomRotateMotor.setPower(0.7);
 
                 boomAngleMotor.setTargetPosition(angleHome);
@@ -514,6 +514,14 @@ public class EdgeBot {
 
                 boomExtendMotor.setTargetPosition(extendHome);
                 boomExtendMotor.setPower(0.15);
+            }
+
+            if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.8);
+            } else if (boomRotateMotor.getCurrentPosition() > (rotateHome + rotateDistance * 0.4)) {
+                boomRotateMotor.setPower(0.6);
+            } else {
+                boomRotateMotor.setPower(0.2);
             }
         }
     }
@@ -528,21 +536,24 @@ public class EdgeBot {
 
             boomRotateMotor.setTargetPosition(rotateSilver);
 
-            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance / 4)) {
-                boomRotateMotor.setPower(0.4);
-
-                boomExtendMotor.setTargetPosition(extendHome - 450);
-                boomExtendMotor.setPower(0.3);
-            } else if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
-                boomRotateMotor.setPower(0.7);
-
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.8)) {
                 boomAngleMotor.setTargetPosition(angleSilver);
                 boomAngleMotor.setPower(1);
+
+                boomExtendMotor.setTargetPosition(extendSilver);
+                boomExtendMotor.setPower(0.3);
             } else {
-                boomRotateMotor.setPower(0.2);
+                boomAngleMotor.setTargetPosition(angleSilver);
+                boomAngleMotor.setPower(1);
 
                 boomExtendMotor.setTargetPosition(extendSilver);
                 boomExtendMotor.setPower(0.15);
+            }
+
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.8);
+            } else {
+                boomRotateMotor.setPower(0.2);
             }
         }
     }
@@ -557,21 +568,24 @@ public class EdgeBot {
 
             boomRotateMotor.setTargetPosition(rotateGold);
 
-            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance / 4)) {
-                boomRotateMotor.setPower(0.4);
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.8)) {
+                boomAngleMotor.setTargetPosition(angleGold);
+                boomAngleMotor.setPower(1);
 
                 boomExtendMotor.setTargetPosition(extendHome - 450);
                 boomExtendMotor.setPower(0.3);
-            } else if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
-                boomRotateMotor.setPower(0.7);
-
+            } else {
                 boomAngleMotor.setTargetPosition(angleGold);
                 boomAngleMotor.setPower(1);
-            } else {
-                boomRotateMotor.setPower(0.2);
 
                 boomExtendMotor.setTargetPosition(extendGold);
                 boomExtendMotor.setPower(0.15);
+            }
+
+            if (boomRotateMotor.getCurrentPosition() < (rotateHome + rotateDistance * 0.7)) {
+                boomRotateMotor.setPower(0.8);
+            } else {
+                boomRotateMotor.setPower(0.2);
             }
         }
     }

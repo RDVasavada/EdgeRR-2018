@@ -79,7 +79,7 @@ public class EdgeTeleop extends LinearOpMode {
         while(opModeIsActive()) {
             /* *** GamePad One *** */
             double driveSpeed = gamepad1.left_stick_y;
-            double rotateSpeed = gamepad1.left_stick_x;
+            double rotateSpeed = gamepad1.right_stick_x;
 
             double liftSpeed = gamepad1.right_trigger - gamepad1.left_trigger;
 
@@ -156,61 +156,19 @@ public class EdgeTeleop extends LinearOpMode {
             telemetry.addData("Extend motor tolerance", robot.boomExtendMotor.getTargetPositionTolerance());
 
             if (gamepad2.left_trigger > 0) {
-                if (!leftTriggerPressed) {
-                    if (leftIntakeOn) {
-                        robot.leftIntakeStop();
-                        leftIntakeOn = false;
-                    } else {
-                        robot.leftIntakeReverse();
-                        leftIntakeOn = true;
-                    }
-
-                    leftTriggerPressed = true;
-                }
+                robot.leftIntakeReverse();
             } else if (gamepad2.left_bumper) {
-                if (!leftBumperPressed) {
-                    if (leftIntakeOn) {
-                        robot.leftIntakeStop();
-                        leftIntakeOn = false;
-                    } else {
-                        robot.leftIntakeSweep();
-                        leftIntakeOn = true;
-                    }
-
-                    leftBumperPressed = true;
-                }
-            } else {
-                leftTriggerPressed = false;
-                leftBumperPressed = false;
+                robot.leftIntakeSweep();
+            } else if (gamepad2.x) {
+                robot.leftIntakeStop();
             }
 
             if (gamepad2.right_trigger > 0) {
-                if (!rightTriggerPressed) {
-                    if (rightIntakeOn) {
-                        robot.rightIntakeStop();
-                        rightIntakeOn = false;
-                    } else {
-                        robot.rightIntakeReverse();
-                        rightIntakeOn = true;
-                    }
-
-                    rightTriggerPressed = true;
-                }
+                robot.rightIntakeReverse();
             } else if (gamepad2.right_bumper) {
-                if (!rightBumperPressed) {
-                    if (rightIntakeOn) {
-                        robot.rightIntakeStop();
-                        rightIntakeOn = false;
-                    } else {
-                        robot.leftIntakeSweep();
-                        rightIntakeOn = true;
-                    }
-
-                    rightIntakeOn = true;
-                }
-            } else {
-                rightTriggerPressed = false;
-                rightBumperPressed = false;
+                robot.rightIntakeSweep();
+            } else if (gamepad2.b) {
+                robot.rightIntakeStop();
             }
 
             if (gamepad2.y) {
