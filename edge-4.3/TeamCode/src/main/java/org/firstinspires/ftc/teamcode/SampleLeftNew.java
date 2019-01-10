@@ -35,9 +35,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "Sample Center")
+@Autonomous(name = "Sample Left New")
 //@Disabled
-public class SampleCenter extends LinearOpMode {
+public class SampleLeftNew extends LinearOpMode {
 
     EdgeBot robot;
 
@@ -51,7 +51,30 @@ public class SampleCenter extends LinearOpMode {
 
         waitForStart();
 
-        robot.driveForwardForSteps(1000, 0.3, telemetry);
+        while (!robot.imu.isGyroCalibrated()) {
+            sleep(100);
+        }
+
+        robot.driveForwardForSteps(300, 0.2, telemetry);
+        sleep(200);
+        robot.rotateCounterClockwiseGyro(45, 1, telemetry);
+        sleep(200);
+        robot.driveForwardForSteps(1200, 0.3, telemetry);
+        sleep(200);
+        robot.rotateClockwiseGyro(90, 1, telemetry);
+        sleep(200);
+
+        robot.driveForwardForSteps(1200, 0.3, telemetry);
+
+        robot.rotateClockwiseGyro(90, 1, telemetry);
+
+        robot.driveForwardForSteps(2500, 0.3, telemetry);
+
+        robot.rotateClockwiseGyro(45, 1, telemetry);
+
+        robot.driveForwardForSteps(300, 1, telemetry);
+
+        robot.rotateCounterClockwiseGyro(90, 1, telemetry);
     }
 
 }

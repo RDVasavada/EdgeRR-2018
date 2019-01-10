@@ -87,6 +87,8 @@ public class EdgeTeleop extends LinearOpMode {
 
             robot.robotLift(liftSpeed);
 
+            telemetry.addData("Lift count", robot.liftMotor.getCurrentPosition());
+
             if (gamepad1.a) {
                 robot.liftServoClamp();
             } else if (gamepad1.b) {
