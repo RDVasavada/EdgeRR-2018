@@ -32,19 +32,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
-@TeleOp(name = "Driver Control (With Lift)")
+@TeleOp(name = "Driver Control (With Arm Deploy)")
 //@Disabled
-public class EdgeTeleop extends LinearOpMode {
+public class ArmDeployTest extends LinearOpMode {
 
     EdgeBot robot;
 
@@ -70,35 +65,28 @@ public class EdgeTeleop extends LinearOpMode {
             double driveSpeed = gamepad1.left_stick_y;
             double rotateSpeed = gamepad1.right_stick_x;
 
-            double liftSpeed = gamepad1.right_trigger - gamepad1.left_trigger;
+            double deploySpeed = gamepad1.right_trigger - gamepad1.left_trigger;
 
             robot.tankDrive(driveSpeed, rotateSpeed);
 
-            robot.robotLift(liftSpeed);
+            robot.runDeployMotor(deploySpeed);
 
-            telemetry.addData("Lift tolerance", robot.liftMotor.getTargetPositionTolerance());
+            telemetry.addData("Deploy motor encoder", robot.deploymentMotor.getCurrentPosition());
+            telemetry.addData("Deploy motor encoder min", robot.initialDeployCount - 600);
+            telemetry.addData("Deploy motor encoder max", robot.initialDeployCount);
+
+            telemetry.addData("Left drive encoder", robot.leftDriveMotor.getCurrentPosition());
+            telemetry.addData("Right drive encoder", robot.rightDriveMotor.getCurrentPosition());
             telemetry.addData("Lift count", robot.liftMotor.getCurrentPosition());
 
             if (gamepad1.a) {
-                robot.liftServoRelease();
-            } else if (gamepad1.b) {
                 robot.liftServoClamp();
+            } else if (gamepad1.b) {
+                robot.liftServoRelease();
             } else if (gamepad1.x) {
                 robot.flipServoDown();
             } else if (gamepad1.y) {
                 robot.flipServoUp();
-            }
-
-            if (gamepad1.a) {
-                robot.setArmHome();
-            }
-
-            if (gamepad1.x) {
-                robot.setArmSilver();
-            }
-
-            if (gamepad1.b) {
-                robot.setArmGold();
             }
 
             /* *** GamePad Two *** */
@@ -167,27 +155,33 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.leftIntakeReverse();
             } else if (gamepad2.left_bumper) {
                 robot.leftIntakeSweep();
+            } else if (gamepad2.x) {
+                robot.leftIntakeStop();
             }
 
             if (gamepad2.right_trigger > 0) {
                 robot.rightIntakeReverse();
             } else if (gamepad2.right_bumper) {
                 robot.rightIntakeSweep();
-            }
-
-            if (gamepad2.a) {
-                robot.runDeployMotor(-0.2);
             } else if (gamepad2.b) {
-                robot.runDeployMotor(0.2);
-            } else if (gamepad2.x) {
-                robot.runDeployMotor(-0.2);
-            } else {
-                robot.runDeployMotor(0);
+                robot.rightIntakeStop();
             }
 
             if (gamepad2.y) {
                 robot.leftIntakeStop();
                 robot.rightIntakeStop();
+            }
+
+            if (gamepad2.a) {
+                robot.setArmHome();
+            }
+
+            if (gamepad2.x) {
+                robot.setArmSilver();
+            }
+
+            if (gamepad2.b) {
+                robot.setArmGold();
             }
 
             telemetry.update();

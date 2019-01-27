@@ -34,10 +34,13 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-@Autonomous(name = "Sample Left New")
+@Autonomous(name = "Reset All Encoders")
 //@Disabled
-public class SampleLeftNew extends LinearOpMode {
+public class ResetEverything extends LinearOpMode {
 
     EdgeBot robot;
 
@@ -51,30 +54,11 @@ public class SampleLeftNew extends LinearOpMode {
 
         waitForStart();
 
-        while (!robot.imu.isGyroCalibrated()) {
-            sleep(100);
-        }
+        robot.setArmMotorsResetEncoders();
+        robot.setArmMotorsResetEncoders();
+        robot.liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.deploymentMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        robot.driveForwardForSteps(300, 0.2, telemetry);
-        sleep(200);
-        robot.rotateCounterClockwiseGyro(45, 1, telemetry);
-        sleep(200);
-        robot.driveForwardForSteps(1200, 0.3, telemetry);
-        sleep(200);
-        robot.rotateClockwiseGyro(90, 1, telemetry);
-        sleep(200);
-
-        robot.driveForwardForSteps(1200, 0.3, telemetry);
-
-        robot.rotateClockwiseGyro(90, 1, telemetry);
-
-        robot.driveForwardForSteps(2500, 0.3, telemetry);
-
-        robot.rotateClockwiseGyro(45, 1, telemetry);
-
-        robot.driveForwardForSteps(300, 1, telemetry);
-
-        robot.rotateCounterClockwiseGyro(90, 1, telemetry);
     }
 
 }

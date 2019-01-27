@@ -40,7 +40,8 @@ public class EdgeBot {
     protected DcMotorEx boomRotateMotor;
     protected DcMotorEx boomAngleMotor;
 
-    protected DcMotorEx deploymentMotor;
+    protected DcMotorEx deploymentMotor; // 600 counts
+    int initialDeployCount = 0;
 
     // Declare drive servos
     private EdgeDriveServo frontLeftServo;
@@ -69,7 +70,6 @@ public class EdgeBot {
     // Local OpMode members
     private HardwareMap hMap;
     private ElapsedTime localPeriod = new ElapsedTime();
-    private ElapsedTime armTimer = new ElapsedTime();
 
     // External Camera
     //public Camera externalCamera = null;
@@ -128,14 +128,18 @@ public class EdgeBot {
 
         // Initialize functional motors
         liftMotor = (DcMotorEx)hMap.dcMotor.get("liftmotor");
+        liftMotor.setTargetPositionTolerance(15);
+
         boomExtendMotor = (DcMotorEx)hMap.dcMotor.get("extendmotor");
         boomRotateMotor = (DcMotorEx)hMap.dcMotor.get("rotatemotor");
         boomAngleMotor = (DcMotorEx)hMap.dcMotor.get("anglemotor");
+
         deploymentMotor = (DcMotorEx)hMap.dcMotor.get("deploymotor");
+        initialDeployCount = deploymentMotor.getCurrentPosition();
 
         // Initialize the distance sensors
-        bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
-        topDistanceSensor = hMap.get(DistanceSensor.class, "toprange");
+        //bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
+        //topDistanceSensor = hMap.get(DistanceSensor.class, "toprange");
 
         // Initialize the imu
         imu = hMap.get(BNO055IMU.class, "imu");
@@ -166,11 +170,6 @@ public class EdgeBot {
         localPeriod.reset();
     }
 
-    // Resets the arm timer
-    public void resetArmTimer() {
-        armTimer.reset();
-    }
-
     public void swerveDrive(double drive, double rotate, double swerve) {
         if (Math.abs(rotate) > 0.05) {
             for (int i = 0; i < 4; i++) {
@@ -191,15 +190,26 @@ public class EdgeBot {
 
         setDriveMotorsRunUsingEncoders();
 
-        double leftPower = drive + rotate;
-        double rightPower = drive - rotate;
+        double leftPower = Math.pow(drive, 2);
+        double rightPower = Math.pow(drive, 2);
 
-        if (leftPower > 1) {
+        if (drive < 0) {
+            leftPower *= -1;
+            rightPower *= -1;
+        }
+
+        leftPower += rotate/2;
+        rightPower -= rotate/2;
+
+        leftPower /= 1.5;
+        rightPower /= 1.5;
+
+        if (Math.abs(leftPower) > 1) {
             rightPower /= leftPower;
-            leftPower = 1;
-        } else if (rightPower > 1) {
+            leftPower /= leftPower;
+        } else if (Math.abs(rightPower) > 1) {
             leftPower /= rightPower;
-            rightPower = 1;
+            rightPower /= rightPower;
         }
 
         leftDriveMotor.setPower(leftPower);
@@ -341,7 +351,7 @@ public class EdgeBot {
             error += 360;
         }
 
-        while (Math.abs(error) > 1 && currentOpmode.opModeIsActive()) {
+        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive()) {
             currentHeading = getRawGyroHeading();
 
             error = targetHeading - currentHeading;
@@ -391,7 +401,7 @@ public class EdgeBot {
             error -= 360;
         }
 
-        while (Math.abs(error) > 1 && currentOpmode.opModeIsActive()) {
+        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive()) {
             currentHeading = getRawGyroHeading();
 
             error = targetHeading - currentHeading;
@@ -460,7 +470,7 @@ public class EdgeBot {
         liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Calculate step counts
-        int liftMotorTarget = liftMotor.getCurrentPosition() + 15000;
+        int liftMotorTarget = liftMotor.getCurrentPosition() + 16500;
 
         // Set target steps
         liftMotor.setTargetPosition(liftMotorTarget);
@@ -471,7 +481,7 @@ public class EdgeBot {
         // keep looping while we are still active, and there is time left, and both motors are running.
         while (liftMotor.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
-            liftMotor.setPower(0.1);
+            liftMotor.setPower(1);
         }
 
         // Stop all motion;
@@ -630,9 +640,31 @@ public class EdgeBot {
         boomRotateMotor.setPower(power);
     }
 
+    public void dropMarker() {
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
     public void boomAngle(double power) {
         boomAngleMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         boomAngleMotor.setPower(power);
+    }
+
+    public void runDeployMotor(double power) {
+        if (power > 0) {
+            if (deploymentMotor.getCurrentPosition() <= initialDeployCount) {
+                deploymentMotor.setPower(power);
+            }
+        }
+
+        if (power < 0) {
+            if (deploymentMotor.getCurrentPosition() > initialDeployCount - 600) {
+                deploymentMotor.setPower(power);
+            }
+        }
+
+        else {
+            deploymentMotor.setPower(0);
+        }
     }
 
     public void leftIntakeSweep() {
@@ -659,20 +691,20 @@ public class EdgeBot {
         rightSweeperServo.setPower(-1);
     }
 
-    public void flipServoHold() {
+    public void flipServoDown() {
         flipServo.setPosition(0);
     }
 
-    public void flipServoFlip() {
+    public void flipServoUp() {
         flipServo.setPosition(0.5);
     }
 
     public void liftServoRelease() {
-        liftServo.setPosition(0);
+        liftServo.setPosition(0.6);
     }
 
     public void liftServoClamp() {
-        liftServo.setPosition(0.75);
+        liftServo.setPosition(0);
     }
 
     public void rotateWheelsToHeading(double targetHeading) {
@@ -741,7 +773,7 @@ public class EdgeBot {
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
-    
+
     public void initTfod(HardwareMap hardwareMap) {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());

@@ -29,9 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -41,55 +41,25 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 
-/**
- * This 2018-2019 OpMode illustrates the basics of using the TensorFlow Object Detection API to
- * determine the position of the gold and silver minerals.
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
- *
- * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
- * is explained below.
- */
-@TeleOp(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
+@Autonomous(name = "Depot - Single Sample, No Park", group = "Concept")
 //@Disabled
-public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
-    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
-    private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
-    private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
+public class DepotAutonSingleNoPark extends LinearOpMode {
+    EdgeBot robot;
 
     boolean goldSeen = false;
+    int goldPos = 0; // -1 = left, 0 = middle, 1 = right
 
-    int goldPos; // 0 = left, 1 = middle, 2 = right
-
-    /*
-     * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
-     * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
-     * A Vuforia 'Development' license key, can be obtained free of charge from the Vuforia developer
-     * web site at https://developer.vuforia.com/license-manager.
-     *
-     * Vuforia license keys are always 380 characters long, and look as if they contain mostly
-     * random data. As an example, here is a example of a fragment of a valid key:
-     *      ... yIgIzTqZ4mWjk9wd3cZO9T1axEqzuhxoGlfOOI2dRzKS4T0hQ8kT ...
-     * Once you've obtained a license key, copy the string from the Vuforia web site
-     * and paste it in to your code on the next line, between the double quotes.
-     */
-    private static final String VUFORIA_KEY = "AZSYh2z/////AAABmVmb68fpMkwVv/U4V+2fIic1AXmJBlXz130BQ3aCOxKrYJ6ccourarslrKUhngfQMldfVyCs4neF1SlcZVcc+cKaowIQp/p2sDKP/DmDCzBen8Z2nWGUT3O17roX69vz1d01zNCGT+Dl+IHJ6LhjgFBou/CSE1QW8+58BkjnMHbV4Y8GdAzoIX4uuE1k8qJ6qu0IYixVSe9m37e9QYEBRiGZDNeOrJ/KLL92uWO2aRFuHgDqDPsUgNIm7FsCoZAw9o4sVDhVxmX0I0NRwoL5mFCxjun5yxTXuDuknrhAcgQEyCKvRlwsSg3C8CSiiqF97j10Z2H5TLWHRTnfH6fIVCH6ek+h8OUImWet0Nvew37I";
-
-    /**
-     * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
-     * localization engine.
-     */
     private VuforiaLocalizer vuforia;
-
-    /**
-     * {@link #tfod} is the variable we will use to store our instance of the Tensor Flow Object
-     * Detection engine.
-     */
     private TFObjectDetector tfod;
+
+    ElapsedTime timer = new ElapsedTime();
 
     @Override
     public void runOpMode() {
+        // Initialize the hardware object
+        robot = new EdgeBot();
+        robot.init(hardwareMap, this);
+
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia();
@@ -97,11 +67,11 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
         } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
+            telemetry.addData("Error", "Cannon initialize TFObjectDetector");
         }
 
         /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to start tracking");
+        telemetry.addData(">", "Press Play to begin");
         telemetry.update();
         waitForStart();
 
@@ -111,7 +81,22 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
                 tfod.activate();
             }
 
-            while (opModeIsActive()) {
+            /*robot.robotLowerAuton();
+
+            robot.liftServoRelease();
+            sleep(1000);
+
+            robot.driveBackwardForInches(100, 0.2, telemetry);
+            sleep(200);*/
+
+            //Initial forward drives
+            robot.driveForwardForSteps(200, 0.3, telemetry);
+            sleep(200);
+
+            timer.reset();
+
+            visionLoop: while (opModeIsActive() && timer.milliseconds() < 5000) {
+                telemetry.addData("Time", timer.milliseconds() / 1000.0);
                 if (tfod != null) {
                     // getUpdatedRecognitions() will return null if no new information is available since
                     // the last time that call was made.
@@ -126,11 +111,11 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
                         int silverCount = 0;
 
                         for (Recognition recognition : updatedRecognitions) {
-                          if (recognition.getLabel() == LABEL_GOLD_MINERAL) {
+                          if (recognition.getLabel() == Constants.Vision.LABEL_GOLD_MINERAL) {
                               goldSeen = true;
                               goldX = recognition.getRight();
                               telemetry.addData("Gold right", goldX);
-                          } else if (recognition.getLabel() == LABEL_SILVER_MINERAL) {
+                          } else if (recognition.getLabel() == Constants.Vision.LABEL_SILVER_MINERAL) {
                               silverX = recognition.getRight();
                               silverCount++;
                           }
@@ -138,27 +123,98 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
 
                         if (!goldSeen) {
                             if (silverCount == 2) {
-                                goldPos = 2;
+                                goldPos = 1;
+                                telemetry.addData("Gold pos", goldPos);
+                                break visionLoop;
                             }
                         } else {
                             if (silverCount == 1) {
                                 if (goldX > silverX) {
-                                    goldPos = 0;
+                                    goldPos = -1;
+                                    telemetry.addData("Gold pos", goldPos);
+                                    break visionLoop;
                                 } else {
-                                    goldPos = 1;
+                                    goldPos = 0;
+                                    telemetry.addData("Gold pos", goldPos);
+                                    break  visionLoop;
                                 }
                             }
                         }
                       }
-                      telemetry.addData("Gold pos", goldPos);
-                      telemetry.update();
                     }
                 }
+                telemetry.update();
+            }
+
+            if (goldPos == -1) { // Left
+                robot.driveForwardForSteps(225, 0.2, telemetry);
+
+                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1350, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateClockwiseGyro(80, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1475, 0.2, telemetry);
+                sleep(200);
+
+                robot.flipServoUp();
+                sleep(200);
+
+                robot.driveBackwardForSteps(800, 0.2, telemetry);
+                sleep(200);
+            } else if (goldPos == 0) { // Center
+                robot.driveForwardForSteps(2200, 0.3, telemetry);
+                sleep(200);
+
+                robot.flipServoUp(); //deposits
+                sleep(200);
+
+                robot.driveBackwardForSteps(1300, 0.2, telemetry);
+                sleep(200);
+            } else if (goldPos == 1) { // Right
+                robot.driveForwardForSteps(240, 0.3, telemetry);
+                sleep(200);
+
+                robot.rotateClockwiseGyro(40, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1300, 0.2, telemetry);
+                sleep(200);
+
+                robot.driveBackwardForSteps(200, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(85, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1400, 0.25, telemetry);
+                sleep(200);
+
+                robot.flipServoUp(); //drop marker
+                sleep(200);
+
+                robot.driveBackwardForSteps(275, 0.2, telemetry);
+
+                robot.rotateClockwiseGyro(90, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveBackwardForSteps(1200, 0.3, telemetry);
+                sleep(200);
             }
         }
 
+        robot.flipServoDown();
+
         if (tfod != null) {
             tfod.shutdown();
+        }
+
+        while (opModeIsActive()) {
+            sleep(20);
         }
     }
 
@@ -171,7 +227,7 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
          */
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.vuforiaLicenseKey = Constants.Vision.VUFORIA_KEY;
         parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
         //  Instantiate the Vuforia engine
@@ -188,6 +244,6 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
             "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+        tfod.loadModelFromAsset(Constants.Vision.TFOD_MODEL_ASSET, Constants.Vision.LABEL_GOLD_MINERAL, Constants.Vision.LABEL_SILVER_MINERAL);
     }
 }

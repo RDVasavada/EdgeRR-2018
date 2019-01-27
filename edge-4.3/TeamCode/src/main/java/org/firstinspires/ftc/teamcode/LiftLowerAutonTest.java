@@ -54,6 +54,10 @@ public class LiftLowerAutonTest extends LinearOpMode {
         waitForStart();
 
         robot.robotLowerAuton();
+
+        while (opModeIsActive()) {
+            robot.liftServoRelease();
+        }
     }
 
 }
