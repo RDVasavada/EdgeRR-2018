@@ -42,7 +42,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Driver Control (With Lift)")
+@TeleOp(name = "Driver Control (Full)")
 //@Disabled
 public class EdgeTeleop extends LinearOpMode {
 
@@ -89,15 +89,15 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.flipServoUp();
             }
 
-            if (gamepad1.a) {
+            if (gamepad1.dpad_down) {
                 robot.setArmHome();
             }
 
-            if (gamepad1.x) {
+            if (gamepad1.dpad_left) {
                 robot.setArmSilver();
             }
 
-            if (gamepad1.b) {
+            if (gamepad1.dpad_right) {
                 robot.setArmGold();
             }
 
@@ -110,6 +110,14 @@ public class EdgeTeleop extends LinearOpMode {
                 boomRotateSpeed = gamepad2.left_stick_x * 0.4;
             } else if (Math.abs(gamepad2.right_stick_x) > 0) {
                 boomRotateSpeed = gamepad2.right_stick_x;
+            }
+
+            if (gamepad2.x) {
+                robot.runDeployMotor(1);
+            } else if (gamepad2.b) {
+                robot.runDeployMotor(-1);
+            } else if (!gamepad2.x && !gamepad2.b) {
+                robot.runDeployMotor(0);
             }
 
             if (gamepad2.dpad_up) {
@@ -175,7 +183,7 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.rightIntakeSweep();
             }
 
-            if (gamepad2.a) {
+            /*if (gamepad2.a) {
                 robot.runDeployMotor(-0.2);
             } else if (gamepad2.b) {
                 robot.runDeployMotor(0.2);
@@ -183,7 +191,7 @@ public class EdgeTeleop extends LinearOpMode {
                 robot.runDeployMotor(-0.2);
             } else {
                 robot.runDeployMotor(0);
-            }
+            }*/
 
             if (gamepad2.y) {
                 robot.leftIntakeStop();

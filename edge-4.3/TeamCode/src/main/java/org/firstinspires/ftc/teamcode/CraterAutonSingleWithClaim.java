@@ -41,9 +41,9 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 
-@Autonomous(name = "Crater - Single Sample, No Claim", group = "Concept")
+@Autonomous(name = "Crater - Single Sample, with Claim", group = "Concept")
 //@Disabled
-public class CraterAutonSingleNoClaim extends LinearOpMode {
+public class CraterAutonSingleWithClaim extends LinearOpMode {
     EdgeBot robot;
 
     boolean goldSeen = false;
@@ -86,8 +86,11 @@ public class CraterAutonSingleNoClaim extends LinearOpMode {
             robot.liftServoRelease();
             sleep(1000);
 
-            //Initial forward drives (350)
-            robot.driveForwardForSteps(150, 0.3, telemetry);
+            robot.driveBackwardForInches(100, 0.2, telemetry);
+            sleep(200);
+
+            //Initial forward drives
+            robot.driveForwardForSteps(275, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
@@ -150,42 +153,67 @@ public class CraterAutonSingleNoClaim extends LinearOpMode {
                 robot.driveForwardForSteps(900, 0.2, telemetry);
                 sleep(200);
 
-                robot.flipServoUp();
-                sleep(1000);
-
-                robot.driveBackwardForSteps(800, 0.2, telemetry);
+                robot.driveBackwardForSteps(150, 0.2, telemetry);
                 sleep(200);
 
+                robot.rotateCounterClockwiseGyro(50, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1250, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(600, 0.3, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(10, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1400, 0.25, telemetry);
+                sleep(200);
+
+                robot.flipServoUp();
+                sleep(500);
+
+                robot.driveBackwardForSteps(1200, 0.2, telemetry);
+            } else if (goldPos == 0) { // Center
+                robot.driveForwardForSteps(600, 0.2, telemetry);
+                sleep(200);
+
+                robot.driveBackwardForSteps(400, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(90, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1600, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(675, 0.3, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(15, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1100, 0.25, telemetry);
+                sleep(200);
+
+                robot.flipServoUp();
+                sleep(500);
+
+                robot.driveBackwardForSteps(1000, 0.2, telemetry);
+                sleep(200);
+            } else if (goldPos == 1) { // Right
                 robot.rotateClockwiseGyro(35, 0.8, telemetry);
                 sleep(200);
 
                 robot.driveForwardForSteps(1300, 0.2, telemetry);
-            } else if (goldPos == 0) { // Center
-                robot.driveForwardForSteps(1300, 0.2, telemetry);
                 sleep(200);
-
-                robot.flipServoUp();
-
-                robot.driveBackwardForSteps(200, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(800, 0.2, telemetry);
-            } else if (goldPos == 1) { // Right
-                robot.driveForwardForSteps(100, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateClockwiseGyro(30, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1800, 0.2, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-
-                robot.driveBackwardForSteps(200, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(800, 0.2, telemetry);
             }
         }
 

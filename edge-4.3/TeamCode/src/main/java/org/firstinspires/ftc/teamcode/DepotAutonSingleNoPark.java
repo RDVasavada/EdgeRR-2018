@@ -90,7 +90,7 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
             sleep(200);*/
 
             //Initial forward drives
-            robot.driveForwardForSteps(200, 0.3, telemetry);
+            robot.driveForwardForSteps(300, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
@@ -147,7 +147,7 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
             }
 
             if (goldPos == -1) { // Left
-                robot.driveForwardForSteps(225, 0.2, telemetry);
+                robot.driveForwardForSteps(125, 0.2, telemetry);
 
                 robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
                 sleep(200);
@@ -162,21 +162,21 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 sleep(200);
 
                 robot.flipServoUp();
-                sleep(200);
+                sleep(500);
 
                 robot.driveBackwardForSteps(800, 0.2, telemetry);
                 sleep(200);
             } else if (goldPos == 0) { // Center
-                robot.driveForwardForSteps(2200, 0.3, telemetry);
+                robot.driveForwardForSteps(2100, 0.3, telemetry);
                 sleep(200);
 
                 robot.flipServoUp(); //deposits
-                sleep(200);
+                sleep(500);
 
-                robot.driveBackwardForSteps(1300, 0.2, telemetry);
+                robot.driveBackwardForSteps(1200, 0.2, telemetry);
                 sleep(200);
             } else if (goldPos == 1) { // Right
-                robot.driveForwardForSteps(240, 0.3, telemetry);
+                robot.driveForwardForSteps(150, 0.3, telemetry);
                 sleep(200);
 
                 robot.rotateClockwiseGyro(40, 0.8, telemetry);
@@ -191,19 +191,13 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 robot.rotateCounterClockwiseGyro(85, 0.8, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1400, 0.25, telemetry);
+                robot.driveForwardForSteps(1400 , 0.25, telemetry);
                 sleep(200);
 
                 robot.flipServoUp(); //drop marker
-                sleep(200);
+                sleep(500);
 
-                robot.driveBackwardForSteps(275, 0.2, telemetry);
-
-                robot.rotateClockwiseGyro(90, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveBackwardForSteps(1200, 0.3, telemetry);
-                sleep(200);
+                robot.driveBackwardForSteps(800, 0.2, telemetry);
             }
         }
 
