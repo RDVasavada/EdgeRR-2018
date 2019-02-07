@@ -29,8 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -41,9 +41,19 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 
-@Autonomous(name = "Crater - Single Sample, No Claim", group = "Concept")
+/**
+ * This 2018-2019 OpMode illustrates the basics of using the TensorFlow Object Detection API to
+ * determine the position of the gold and silver minerals.
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
+ *
+ * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
+ * is explained below.
+ */
+@TeleOp(name = "Vision Test - Drive Forwards", group = "Concept")
 //@Disabled
-public class CraterAutonSingleNoClaim extends LinearOpMode {
+public class VisionTest extends LinearOpMode {
     EdgeBot robot;
 
     ElapsedTime timer = new ElapsedTime();
@@ -63,11 +73,11 @@ public class CraterAutonSingleNoClaim extends LinearOpMode {
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             robot.initTfod(hardwareMap);
         } else {
-            telemetry.addData("Error", "Cannon initialize TFObjectDetector");
+            telemetry.addData(">", "Press play to start");
         }
 
         /** Wait for the game to begin */
-        telemetry.addData("Quote of the program: ", "It's over Anakin! I have the high ground.");
+        telemetry.addData("Quote of the program: ", "");
         telemetry.update();
         waitForStart();
 
@@ -82,87 +92,32 @@ public class CraterAutonSingleNoClaim extends LinearOpMode {
             robot.liftServoRelease();
             sleep(1000);*/
 
-            robot.driveForwardForInches(3.25, 0.4, telemetry);
+            //Initial forward drives (350)
+            robot.driveForwardForSteps(175, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
 
-            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 1000) {
                 location = robot.detectCube(telemetry);
             }
 
-            robot.driveForwardForInches(3, 0.4, telemetry);
+            sleep(5000);
+
+            robot.driveForwardForSteps(100, 0.2, telemetry);
             sleep(200);
 
             timer.reset();
 
-            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 1000) {
                 location = robot.detectCube(telemetry);
             }
 
-            if (location == cubeLocation.UNKNOWN) {
-                location = cubeLocation.RIGHT;
-                telemetry.addData(">>", "Defaulting to right");
+            while (opModeIsActive()) {
+                telemetry.addData("Cube location: ", location);
                 telemetry.update();
             }
 
-            if (location == cubeLocation.LEFT) {
-                robot.rotateCounterClockwiseGyro(45, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForInches(23, 0.6, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-                sleep(1000);
-
-                robot.driveBackwardForInches(19, 0.6, telemetry);
-                sleep(200);
-
-                robot.rotateClockwiseGyro(45, 0.8, telemetry);
-                sleep(200);
-
-                //robot.driveForwardForInches(34.8, 0.6, telemetry);
-            } else if (location == cubeLocation.CENTER) {
-                robot.driveForwardForInches(28.1, 0.6, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-
-                robot.driveBackwardForInches(5.3, 0.6, telemetry);
-                sleep(200);
-
-                //robot.driveForwardForInches(21.4, 0.6, telemetry);
-            } else if (location == cubeLocation.RIGHT) {
-                robot.rotateClockwiseGyro(45, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForInches(30, 0.6, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-
-                robot.driveBackwardForInches(5.3, 0.6, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(45, 0.8, telemetry);
-                sleep(200);
-
-                //robot.driveForwardForInches(15, 0.6, telemetry);
-            }
-        }
-
-        if (opModeIsActive()) {
-            robot.boomRotateAuton();
-        }
-
-        if (robot.tfod != null) {
-            robot.shutdownTfod();
-        }
-
-        while (opModeIsActive()) {
-            sleep(20);
         }
     }
 }
-

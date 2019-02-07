@@ -26,15 +26,20 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
+import java.util.List;
+
 public class EdgeBot {
+
     // Declare drive motors
     protected DcMotorEx leftDriveMotor;
     protected DcMotorEx rightDriveMotor;
 
     // Declare functional motors
-    protected DcMotorEx liftMotor;
+    protected DcMotorEx liftMotor1;
+    protected DcMotorEx liftMotor2;
 
     protected DcMotorEx boomExtendMotor;
     protected DcMotorEx boomRotateMotor;
@@ -42,15 +47,6 @@ public class EdgeBot {
 
     protected DcMotorEx deploymentMotor; // 600 counts
     int initialDeployCount = 0;
-
-    // Declare drive servos
-    private EdgeDriveServo frontLeftServo;
-    private EdgeDriveServo frontRightServo;
-    private EdgeDriveServo rearLeftServo;
-    private EdgeDriveServo rearRightServo;
-
-    // Array of drive servos
-    private EdgeDriveServo[] driveServos = {frontLeftServo, frontRightServo, rearLeftServo, rearRightServo};
 
     // Declare other servos
     private CRServo leftSweeperServo;
@@ -61,8 +57,8 @@ public class EdgeBot {
     private Servo liftServo;
 
     // Declare distance sensors
-    private DistanceSensor bottomDistanceSensor;
-    private DistanceSensor topDistanceSensor;
+    private DistanceSensor markerDistanceSensor;
+    private DistanceSensor liftDistanceSensor;
 
     // Declare imu (inertial motion unit)
     protected BNO055IMU imu;
@@ -110,36 +106,34 @@ public class EdgeBot {
         currentOpmode = opMode;
 
         // Initialize servos
-        //frontLeftServo = new EdgeDriveServo(hMap.crservo.get("flservo"), hMap.analogInput.get("flpot"));
-        //frontRightServo = new EdgeDriveServo(hMap.crservo.get("frservo"), hMap.analogInput.get("frpot"));
-        //rearLeftServo = new EdgeDriveServo(hMap.crservo.get("rlservo"), hMap.analogInput.get("rlpot"));
-        //rearRightServo = new EdgeDriveServo(hMap.crservo.get("rrservo"), hMap.analogInput.get("rrpot"));
-
         leftSweeperServo = hMap.crservo.get("lsweeper");
         rightSweeperServo = hMap.crservo.get("rsweeper");
 
         flipServo = hMap.servo.get("flipservo");
 
-        liftServo =  hMap.servo.get("liftservo");
+        liftServo = hMap.servo.get("liftservo");
 
         // Initialize drive motors
-        leftDriveMotor = (DcMotorEx)hMap.dcMotor.get("ldmotor");
-        rightDriveMotor = (DcMotorEx)hMap.dcMotor.get("rdmotor");
+        leftDriveMotor = (DcMotorEx) hMap.dcMotor.get("ldmotor");
+        rightDriveMotor = (DcMotorEx) hMap.dcMotor.get("rdmotor");
 
         // Initialize functional motors
-        liftMotor = (DcMotorEx)hMap.dcMotor.get("liftmotor");
-        liftMotor.setTargetPositionTolerance(15);
+        liftMotor1 = (DcMotorEx) hMap.dcMotor.get("liftmotor1");
+        liftMotor1.setTargetPositionTolerance(15);
 
-        boomExtendMotor = (DcMotorEx)hMap.dcMotor.get("extendmotor");
-        boomRotateMotor = (DcMotorEx)hMap.dcMotor.get("rotatemotor");
-        boomAngleMotor = (DcMotorEx)hMap.dcMotor.get("anglemotor");
+        liftMotor2 = (DcMotorEx) hMap.dcMotor.get("liftmotor2");
+        liftMotor2.setTargetPositionTolerance(15);
 
-        deploymentMotor = (DcMotorEx)hMap.dcMotor.get("deploymotor");
+        boomExtendMotor = (DcMotorEx) hMap.dcMotor.get("extendmotor");
+        boomRotateMotor = (DcMotorEx) hMap.dcMotor.get("rotatemotor");
+        boomAngleMotor = (DcMotorEx) hMap.dcMotor.get("anglemotor");
+
+        deploymentMotor = (DcMotorEx) hMap.dcMotor.get("deploymotor");
         initialDeployCount = deploymentMotor.getCurrentPosition();
 
         // Initialize the distance sensors
-        //bottomDistanceSensor = hMap.get(DistanceSensor.class, "bottomrange");
-        //topDistanceSensor = hMap.get(DistanceSensor.class, "toprange");
+        //marketDistanceSensor = hMap.get(DistanceSensor.class, "markerrange");
+        //liftDistanceSensor = hMap.get(DistanceSensor.class, "liftrange");
 
         // Initialize the imu
         imu = hMap.get(BNO055IMU.class, "imu");
@@ -170,23 +164,30 @@ public class EdgeBot {
         localPeriod.reset();
     }
 
-    public void swerveDrive(double drive, double rotate, double swerve) {
-        if (Math.abs(rotate) > 0.05) {
-            for (int i = 0; i < 4; i++) {
-                driveServos[i].setPower(swerve);
-            }
-        } else {
-            for (int i = 0; i < 4; i++) {
-                driveServos[i].setPower(0);
-            }
+    public void mecanumDrive(double drive, double rotate) {
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        setDriveMotorsRunUsingEncoders();
+
+        double leftPower = drive + rotate;
+        double rightPower = drive - rotate;
+
+        if (Math.abs(leftPower) > 1) {
+            rightPower /= leftPower;
+            leftPower /= leftPower;
+        } else if (Math.abs(rightPower) > 1) {
+            leftPower /= rightPower;
+            rightPower /= rightPower;
         }
 
-        tankDrive(drive, rotate);
+        leftDriveMotor.setPower(leftPower * 0.75);
+        rightDriveMotor.setPower(rightPower * 0.75);
     }
 
     public void tankDrive(double drive, double rotate) {
-        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         setDriveMotorsRunUsingEncoders();
 
@@ -198,8 +199,8 @@ public class EdgeBot {
             rightPower *= -1;
         }
 
-        leftPower += rotate/2;
-        rightPower -= rotate/2;
+        leftPower += rotate / 2;
+        rightPower -= rotate / 2;
 
         leftPower /= 1.5;
         rightPower /= 1.5;
@@ -312,8 +313,8 @@ public class EdgeBot {
 
     // Rotate counterclockwise at given speed
     public void rotateCounterClockwise(double speed) {
-        leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         leftDriveMotor.setPower(speed);
         rightDriveMotor.setPower(speed);
@@ -321,8 +322,8 @@ public class EdgeBot {
 
     // Rotate clockwise at given speed
     public void rotateClockwise(double speed) {
-        leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightDriveMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         leftDriveMotor.setPower(speed);
         rightDriveMotor.setPower(speed);
@@ -351,7 +352,9 @@ public class EdgeBot {
             error += 360;
         }
 
-        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive()) {
+        localPeriod.reset();
+
+        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive() && localPeriod.milliseconds() < 7000) {
             currentHeading = getRawGyroHeading();
 
             error = targetHeading - currentHeading;
@@ -360,17 +363,12 @@ public class EdgeBot {
                 error += 360;
             }
 
-            double speed = maxSpeed * (Math.abs(error) / 200) + 0.05;
+            double speed = maxSpeed * (Math.abs(error) / 75) + 0.3;
             if (speed > maxSpeed) {
                 speed = maxSpeed;
             }
 
             rotateCounterClockwise(speed);
-
-            telemetry.addData("Initial heading", initialHeading);
-            telemetry.addData("Current Heading", getRawGyroHeading());
-            telemetry.addData("Target heading", targetHeading);
-            telemetry.update();
         }
 
         stopDriveMotors();
@@ -401,7 +399,9 @@ public class EdgeBot {
             error -= 360;
         }
 
-        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive()) {
+        localPeriod.reset();
+
+        while (Math.abs(error) > 3 && currentOpmode.opModeIsActive() && localPeriod.milliseconds() < 7000) {
             currentHeading = getRawGyroHeading();
 
             error = targetHeading - currentHeading;
@@ -410,17 +410,12 @@ public class EdgeBot {
                 error -= 360;
             }
 
-            double speed = maxSpeed * (Math.abs(error) / 200) + 0.05;
+            double speed = maxSpeed * (Math.abs(error) / 75) + 0.3;
             if (speed > maxSpeed) {
                 speed = maxSpeed;
             }
 
             rotateClockwise(speed);
-
-            telemetry.addData("Initial heading", initialHeading);
-            telemetry.addData("Current Heading", getRawGyroHeading());
-            telemetry.addData("Target heading", targetHeading);
-            telemetry.update();
         }
 
         stopDriveMotors();
@@ -428,8 +423,38 @@ public class EdgeBot {
         setDriveMotorsRunUsingEncoders();
     }
 
+    // Drive to a certain distance (inches) on the marker sensor
+    public void driveToMarkerDistance(double power, double distance) {
+        double currentDistance = getMarkerSensorDistance(DistanceUnit.INCH);
+
+        double error = distance - currentDistance;
+
+        while (currentOpmode.opModeIsActive() && Math.abs(error) > 1.5) {
+            if (error > 0) {
+                driveForwards(power);
+            } else {
+                driveBackwards(power);
+            }
+        }
+    }
+
+    // Drive to a certain distance (inches) on the lift sensor
+    public void driveToLiftDistance(double power, double distance) {
+        double currentDistance = getLiftSensorDistance(DistanceUnit.INCH);
+
+        double error = distance - currentDistance;
+
+        while (currentOpmode.opModeIsActive() && Math.abs(error) > 1.5) {
+            if (error > 0) {
+                driveBackwards(power);
+            } else {
+                driveForwards(power);
+            }
+        }
+    }
+
     // Set the drive motors to run without encoders
-    public  void setDriveMotorsRunWithoutEncoders() {
+    public void setDriveMotorsRunWithoutEncoders() {
         leftDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightDriveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
@@ -467,36 +492,45 @@ public class EdgeBot {
     }
 
     public void robotLowerAuton() {
-        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        liftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Calculate step counts
-        int liftMotorTarget = liftMotor.getCurrentPosition() + 16500;
+        int liftMotor1Target = liftMotor2.getCurrentPosition() + 16500;
+        int liftMotor2Target = liftMotor2.getCurrentPosition() + 16500;
 
         // Set target steps
-        liftMotor.setTargetPosition(liftMotorTarget);
+        liftMotor1.setTargetPosition(liftMotor1Target);
+        liftMotor2.setTargetPosition(liftMotor2Target);
 
         // Turn on RUN_TO_POSITION
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
-        while (liftMotor.isBusy() && currentOpmode.opModeIsActive()) {
+        while (liftMotor1.isBusy() && liftMotor2.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
-            liftMotor.setPower(1);
+            liftMotor1.setPower(1);
+            liftMotor2.setPower(1);
         }
 
         // Stop all motion;
-        liftMotor.setPower(0);
+        liftMotor2.setPower(0);
 
         // Turn off RUN_TO_POSITION
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void robotLift(double power) {
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        liftMotor.setPower(power);
+        liftMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor1.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor1.setPower(power);
+
+        liftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor2.setPower(power);
     }
 
     public void armHomePosition() {
@@ -640,6 +674,20 @@ public class EdgeBot {
         boomRotateMotor.setPower(power);
     }
 
+    public void boomRotateAuton() {
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        boomRotateMotor.setTargetPosition(boomRotateMotor.getCurrentPosition() + 180);
+        boomRotateMotor.setPower(0.5);
+
+        while (currentOpmode.opModeIsActive() && boomRotateMotor.isBusy()) {
+            waitForTick(50);
+        }
+
+        boomRotateMotor.setPower(0);
+
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
     public void dropMarker() {
         boomRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
@@ -660,9 +708,7 @@ public class EdgeBot {
             if (deploymentMotor.getCurrentPosition() > initialDeployCount - 600) {
                 deploymentMotor.setPower(power);
             }
-        }
-
-        else {
+        } else {
             deploymentMotor.setPower(0);
         }
     }
@@ -707,31 +753,13 @@ public class EdgeBot {
         liftServo.setPosition(0);
     }
 
-    public void rotateWheelsToHeading(double targetHeading) {
-        while (currentOpmode.opModeIsActive() && frontLeftServo.isBusy() && frontRightServo.isBusy() && rearLeftServo.isBusy() && rearRightServo.isBusy()) {
-            for (int i = 0; i < 4; i++) {
-                double currentHeading = driveServos[i].getPositionDegrees();
-                double error = targetHeading - currentHeading;
-                double output;
-
-                if (Math.abs(error) > 0.5) {
-                    output = (error / 40) + (error > 0 ? 0.1 : -0.1);
-                } else {
-                    output = 0;
-                }
-
-                driveServos[i].setPower(output);
-            }
-        }
-    }
-
     // Get the distance sensors values
-    public double getBottomSensorDistance(DistanceUnit unit) {
-        return bottomDistanceSensor.getDistance(unit);
+    public double getMarkerSensorDistance(DistanceUnit unit) {
+        return markerDistanceSensor.getDistance(unit);
     }
 
-    public double getTopSensorDistance(DistanceUnit unit) {
-        return topDistanceSensor.getDistance(unit);
+    public double getLiftSensorDistance(DistanceUnit unit) {
+        return liftDistanceSensor.getDistance(unit);
     }
 
     // Get the raw gyro heading in degrees
@@ -756,9 +784,64 @@ public class EdgeBot {
 
     // Convert from inches to encoder counts
     public int inchToEncoder(double inches) {
-        int counts = (int)Math.round(inches * Constants.Chassis.COUNTS_PER_INCH); // 37.4 encoder counts for one inch
+        int counts = (int) Math.round(inches * Constants.Chassis.COUNTS_PER_INCH_M); // 37.4 encoder counts for one inch
 
         return counts;
+    }
+
+    public cubeLocation detectCube(Telemetry telemetry) {
+        cubeLocation location = cubeLocation.UNKNOWN;
+
+        boolean goldSeen = false;
+
+        if (tfod != null) {
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                if (updatedRecognitions.size() > 1) {
+
+                    double silverX = -1;
+                    double goldX = -1;
+
+                    int silverCount = 0;
+
+                    for (Recognition recognition : updatedRecognitions) {
+                        if (recognition.getLabel() == Constants.Vision.LABEL_GOLD_MINERAL) {
+                            telemetry.addData("Confidence", recognition.getConfidence());
+                            if (recognition.getConfidence() > 0.75) {
+                                goldSeen = true;
+                                goldX = recognition.getRight();
+                                telemetry.addData("Gold right", goldX);
+                            }
+                        } else if (recognition.getLabel() == Constants.Vision.LABEL_SILVER_MINERAL) {
+                            silverX = recognition.getRight();
+                            silverCount++;
+                        }
+                    }
+
+                    if (!goldSeen) {
+                        if (silverCount == 2) {
+                            location = cubeLocation.RIGHT;
+                        }
+                    } else {
+                        if (silverCount == 1) {
+                            if (goldX > silverX) {
+                                location = cubeLocation.LEFT;
+                            } else {
+                                location = cubeLocation.CENTER;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        telemetry.addData("Gold location: ", location);
+        telemetry.update();
+
+        return location;
     }
 
     public void initVuforia(HardwareMap hardwareMap) {
@@ -782,4 +865,17 @@ public class EdgeBot {
         tfod.loadModelFromAsset(Constants.Vision.TFOD_MODEL_ASSET, Constants.Vision.LABEL_GOLD_MINERAL, Constants.Vision.LABEL_SILVER_MINERAL);
     }
 
+    public void activateTfod() {
+        tfod.activate();
+    }
+
+    public void shutdownTfod() {
+        tfod.shutdown();
+    }
+
 }
+
+enum cubeLocation {
+    LEFT, CENTER, RIGHT, UNKNOWN;
+}
+

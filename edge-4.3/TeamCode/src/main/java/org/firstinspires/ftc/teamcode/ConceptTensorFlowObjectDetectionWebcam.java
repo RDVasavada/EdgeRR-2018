@@ -127,9 +127,11 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
 
                         for (Recognition recognition : updatedRecognitions) {
                           if (recognition.getLabel() == LABEL_GOLD_MINERAL) {
-                              goldSeen = true;
-                              goldX = recognition.getRight();
-                              telemetry.addData("Gold right", goldX);
+                              if (recognition.getConfidence() > 0.7) {
+                                  goldSeen = true;
+                                  goldX = recognition.getRight();
+                                  telemetry.addData("Gold right", goldX);
+                              }
                           } else if (recognition.getLabel() == LABEL_SILVER_MINERAL) {
                               silverX = recognition.getRight();
                               silverCount++;
@@ -138,14 +140,14 @@ public class ConceptTensorFlowObjectDetectionWebcam extends LinearOpMode {
 
                         if (!goldSeen) {
                             if (silverCount == 2) {
-                                goldPos = 2;
+                                goldPos = 1;
                             }
                         } else {
                             if (silverCount == 1) {
                                 if (goldX > silverX) {
-                                    goldPos = 0;
+                                    goldPos = -1;
                                 } else {
-                                    goldPos = 1;
+                                    goldPos = 0;
                                 }
                             }
                         }

@@ -32,37 +32,35 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-@Autonomous(name = "Reset All Encoders")
+@TeleOp(name = "Encoder Test")
 //@Disabled
-public class ResetEverything extends LinearOpMode {
+public class EncoderTest extends LinearOpMode {
 
     EdgeBot robot;
+
+    // For braking the arm motors
+    boolean extensionMotorIsStopped = false;
+
+    boolean armInPreset = false;
 
     @Override
     public void runOpMode() {
         robot = new EdgeBot();
         robot.init(hardwareMap, this);
 
+        robot.setArmMotorsResetEncoders();
+
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
 
         waitForStart();
 
-        robot.setDriveMotorsResetEncoders();
-        robot.setArmMotorsResetEncoders();
-        robot.liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.deploymentMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        while (opModeIsActive()) {
-            sleep(20);
-        }
+        robot.driveForwardForSteps(1000, 0.3, telemetry);
 
     }
 

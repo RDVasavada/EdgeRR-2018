@@ -60,24 +60,24 @@ public class EdgeTeleop extends LinearOpMode {
 
         robot.setArmMotorsResetEncoders();
 
-        telemetry.addData(">>", "Press start to continue");
+        telemetry.addData("Quote of the program:", "This is where the fun begins");
         telemetry.update();
 
         waitForStart();
 
         while(opModeIsActive()) {
             /* *** GamePad One *** */
-            double driveSpeed = gamepad1.left_stick_y;
+            double driveSpeed = -gamepad1.left_stick_y;
             double rotateSpeed = gamepad1.right_stick_x;
 
             double liftSpeed = gamepad1.right_trigger - gamepad1.left_trigger;
 
-            robot.tankDrive(driveSpeed, rotateSpeed);
+            robot.mecanumDrive(driveSpeed, rotateSpeed);
 
             robot.robotLift(liftSpeed);
 
-            telemetry.addData("Lift tolerance", robot.liftMotor.getTargetPositionTolerance());
-            telemetry.addData("Lift count", robot.liftMotor.getCurrentPosition());
+            telemetry.addData("Lift tolerance", robot.liftMotor1.getTargetPositionTolerance());
+            telemetry.addData("Lift count", robot.liftMotor1.getCurrentPosition());
 
             if (gamepad1.a) {
                 robot.liftServoRelease();
@@ -182,16 +182,6 @@ public class EdgeTeleop extends LinearOpMode {
             } else if (gamepad2.right_bumper) {
                 robot.rightIntakeSweep();
             }
-
-            /*if (gamepad2.a) {
-                robot.runDeployMotor(-0.2);
-            } else if (gamepad2.b) {
-                robot.runDeployMotor(0.2);
-            } else if (gamepad2.x) {
-                robot.runDeployMotor(-0.2);
-            } else {
-                robot.runDeployMotor(0);
-            }*/
 
             if (gamepad2.y) {
                 robot.leftIntakeStop();

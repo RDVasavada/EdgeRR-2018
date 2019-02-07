@@ -69,28 +69,11 @@ public class SensorREV2mDistanceTest extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            double topSensorDistance = robot.getTopSensorDistance(DistanceUnit.INCH);
-            double bottomSensorDistance = robot.getBottomSensorDistance(DistanceUnit.INCH);
+            double liftDistance = robot.getLiftSensorDistance(DistanceUnit.INCH);
+            double markerDistance = robot.getMarkerSensorDistance(DistanceUnit.INCH);
 
-            boolean triggeredTop = false;
-            boolean triggeredBottom = false;
-
-            if (topSensorDistance < 10) {
-                triggeredTop = true;
-            }
-
-            if (bottomSensorDistance < 10) {
-                triggeredBottom = true;
-            }
-
-            telemetry.addData("Top", topSensorDistance);
-            telemetry.addData("Bottom", bottomSensorDistance);
-
-            if (triggeredBottom && triggeredTop) {
-                telemetry.addData("Object detected", "sphere");
-            } else if (triggeredBottom) {
-                telemetry.addData("Object detected", "cube");
-            }
+            telemetry.addData("Lift side", liftDistance);
+            telemetry.addData("Marker side", markerDistance);
 
             telemetry.update();
         }

@@ -47,10 +47,7 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
     EdgeBot robot;
 
     boolean goldSeen = false;
-    int goldPos = 0; // -1 = left, 0 = middle, 1 = right
-
-    private VuforiaLocalizer vuforia;
-    private TFObjectDetector tfod;
+    cubeLocation location = cubeLocation.UNKNOWN;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -62,10 +59,10 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
-        initVuforia();
+        robot.initVuforia(hardwareMap);
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
+            robot.initTfod(hardwareMap);
         } else {
             telemetry.addData("Error", "Cannon initialize TFObjectDetector");
         }
@@ -77,76 +74,40 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
 
         if (opModeIsActive()) {
             /** Activate Tensor Flow Object Detection. */
-            if (tfod != null) {
-                tfod.activate();
+            if (robot.tfod != null) {
+                robot.tfod.activate();
             }
 
-            /*robot.robotLowerAuton();
+            robot.robotLowerAuton();
 
             robot.liftServoRelease();
             sleep(1000);
 
-            robot.driveBackwardForInches(100, 0.2, telemetry);
-            sleep(200);*/
-
-            //Initial forward drives
-            robot.driveForwardForSteps(300, 0.3, telemetry);
+            robot.driveForwardForSteps(175, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
 
-            visionLoop: while (opModeIsActive() && timer.milliseconds() < 5000) {
-                telemetry.addData("Time", timer.milliseconds() / 1000.0);
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                      telemetry.addData("# Object Detected", updatedRecognitions.size());
-                      if (updatedRecognitions.size() > 1) {
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+                location = robot.detectCube(telemetry);
+            }
 
-                        double silverX = -1;
-                        double goldX = -1;
+            robot.driveForwardForSteps(130, 0.2, telemetry);
+            sleep(200);
 
-                        int silverCount = 0;
+            timer.reset();
 
-                        for (Recognition recognition : updatedRecognitions) {
-                          if (recognition.getLabel() == Constants.Vision.LABEL_GOLD_MINERAL) {
-                              goldSeen = true;
-                              goldX = recognition.getRight();
-                              telemetry.addData("Gold right", goldX);
-                          } else if (recognition.getLabel() == Constants.Vision.LABEL_SILVER_MINERAL) {
-                              silverX = recognition.getRight();
-                              silverCount++;
-                          }
-                        }
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+                location = robot.detectCube(telemetry);
+            }
 
-                        if (!goldSeen) {
-                            if (silverCount == 2) {
-                                goldPos = 1;
-                                telemetry.addData("Gold pos", goldPos);
-                                break visionLoop;
-                            }
-                        } else {
-                            if (silverCount == 1) {
-                                if (goldX > silverX) {
-                                    goldPos = -1;
-                                    telemetry.addData("Gold pos", goldPos);
-                                    break visionLoop;
-                                } else {
-                                    goldPos = 0;
-                                    telemetry.addData("Gold pos", goldPos);
-                                    break  visionLoop;
-                                }
-                            }
-                        }
-                      }
-                    }
-                }
+            if (location == cubeLocation.UNKNOWN) {
+                location = cubeLocation.CENTER;
+                telemetry.addData(">>", "Defaulting to right");
                 telemetry.update();
             }
 
-            if (goldPos == -1) { // Left
+            if (location == cubeLocation.LEFT) { // Left
                 robot.driveForwardForSteps(125, 0.2, telemetry);
 
                 robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
@@ -164,18 +125,22 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 robot.flipServoUp();
                 sleep(500);
 
-                robot.driveBackwardForSteps(800, 0.2, telemetry);
+                robot.driveBackwardForSteps(1100, 0.2, telemetry);
                 sleep(200);
-            } else if (goldPos == 0) { // Center
-                robot.driveForwardForSteps(2100, 0.3, telemetry);
+
+                robot.boomRotateAuton();
+            } else if (location == cubeLocation.CENTER) { // Center
+                robot.driveForwardForSteps(2050, 0.3, telemetry);
                 sleep(200);
 
                 robot.flipServoUp(); //deposits
                 sleep(500);
 
-                robot.driveBackwardForSteps(1200, 0.2, telemetry);
+                robot.driveBackwardForSteps(1300, 0.2, telemetry);
                 sleep(200);
-            } else if (goldPos == 1) { // Right
+
+                robot.boomRotateAuton();
+            } else if (location == cubeLocation.RIGHT) { // Right
                 robot.driveForwardForSteps(150, 0.3, telemetry);
                 sleep(200);
 
@@ -183,9 +148,6 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 sleep(200);
 
                 robot.driveForwardForSteps(1300, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveBackwardForSteps(200, 0.2, telemetry);
                 sleep(200);
 
                 robot.rotateCounterClockwiseGyro(85, 0.8, telemetry);
@@ -197,47 +159,27 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 robot.flipServoUp(); //drop marker
                 sleep(500);
 
-                robot.driveBackwardForSteps(800, 0.2, telemetry);
+                robot.driveBackwardForSteps(1350, 0.25, telemetry);
+                sleep(200);
+
+                robot.flipServoDown();
+                sleep(1000);
+
+                robot.rotateClockwiseGyro(85, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveBackwardForSteps(1400, 0.2, telemetry);
+
+                robot.boomRotateAuton();
             }
         }
 
-        robot.flipServoDown();
-
-        if (tfod != null) {
-            tfod.shutdown();
+        if (robot.tfod != null) {
+            robot.tfod.shutdown();
         }
 
         while (opModeIsActive()) {
             sleep(20);
         }
-    }
-
-    /**
-     * Initialize the Vuforia localization engine.
-     */
-    private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-        parameters.vuforiaLicenseKey = Constants.Vision.VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-    }
-
-    /**
-     * Initialize the Tensor Flow Object Detection engine.
-     */
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(Constants.Vision.TFOD_MODEL_ASSET, Constants.Vision.LABEL_GOLD_MINERAL, Constants.Vision.LABEL_SILVER_MINERAL);
     }
 }

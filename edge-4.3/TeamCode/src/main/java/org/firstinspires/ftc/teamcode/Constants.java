@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 public class Constants {
     public class Chassis {
         public static final double COUNTS_PER_INCH = 37.4;
+        public static final double COUNTS_PER_INCH_M = 83;
     }
 
     public class Vision {

@@ -47,10 +47,7 @@ public class CraterAutonDouble extends LinearOpMode {
     EdgeBot robot;
 
     boolean goldSeen = false;
-    int goldPos = 0; // -1 = left, 0 = middle, 1 = right
-
-    private VuforiaLocalizer vuforia;
-    private TFObjectDetector tfod;
+    cubeLocation location = cubeLocation.UNKNOWN;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -62,270 +59,167 @@ public class CraterAutonDouble extends LinearOpMode {
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
-        initVuforia();
+        robot.initVuforia(hardwareMap);
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
+            robot.initTfod(hardwareMap);
         } else {
             telemetry.addData("Error", "Cannon initialize TFObjectDetector");
         }
 
         /** Wait for the game to begin */
-        telemetry.addData(">", "Press Play to begin");
+        telemetry.addData("Quote of the program: ", "I have brought PEACE, JUSTICE, and SECURITY to my NEW EMPIRE!");
         telemetry.update();
         waitForStart();
 
         if (opModeIsActive()) {
             /** Activate Tensor Flow Object Detection. */
-            if (tfod != null) {
-                tfod.activate();
+            if (robot.tfod != null) {
+                robot.tfod.activate();
             }
 
             /*robot.robotLowerAuton();
 
             robot.liftServoRelease();
-            sleep(1000);
+            sleep(1000);*/
 
-            robot.driveBackwardForInches(100, 0.2, telemetry);
-            sleep(200);*/
-
-            //Initial forward drives
-            robot.driveForwardForSteps(300, 0.3, telemetry);
+            robot.driveForwardForSteps(175, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
 
-            visionLoop: while (opModeIsActive() && timer.milliseconds() < 5000) {
-                telemetry.addData("Time", timer.milliseconds() / 1000.0);
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                      telemetry.addData("# Object Detected", updatedRecognitions.size());
-                      if (updatedRecognitions.size() > 1) {
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+                location = robot.detectCube(telemetry);
+            }
 
-                        double silverX = -1;
-                        double goldX = -1;
+            robot.driveForwardForSteps(100, 0.2, telemetry);
+            sleep(200);
 
-                        int silverCount = 0;
+            timer.reset();
 
-                        for (Recognition recognition : updatedRecognitions) {
-                          if (recognition.getLabel() == Constants.Vision.LABEL_GOLD_MINERAL) {
-                              goldSeen = true;
-                              goldX = recognition.getRight();
-                              telemetry.addData("Gold right", goldX);
-                          } else if (recognition.getLabel() == Constants.Vision.LABEL_SILVER_MINERAL) {
-                              silverX = recognition.getRight();
-                              silverCount++;
-                          }
-                        }
+            while (opModeIsActive() && location == cubeLocation.UNKNOWN && timer.milliseconds() < 500.0) {
+                location = robot.detectCube(telemetry);
+            }
 
-                        if (!goldSeen) {
-                            if (silverCount == 2) {
-                                goldPos = 1;
-                                telemetry.addData("Gold pos", goldPos);
-                                break visionLoop;
-                            }
-                        } else {
-                            if (silverCount == 1) {
-                                if (goldX > silverX) {
-                                    goldPos = -1;
-                                    telemetry.addData("Gold pos", goldPos);
-                                    break visionLoop;
-                                } else {
-                                    goldPos = 0;
-                                    telemetry.addData("Gold pos", goldPos);
-                                    break  visionLoop;
-                                }
-                            }
-                        }
-                      }
-                    }
-                }
+            if (location == cubeLocation.UNKNOWN) {
+                location = cubeLocation.RIGHT;
+                telemetry.addData(">>", "Defaulting to right");
                 telemetry.update();
             }
 
-            if (goldPos == -1) { // Left
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
+            if (location == cubeLocation.LEFT) {
+                //initial turn
+                robot.rotateCounterClockwiseGyro(30, 0.8, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(700, 0.2, telemetry);
+                robot.driveForwardForSteps(880, 0.2, telemetry);
                 sleep(200);
 
-                robot.driveBackwardForSteps(250, 0.2, telemetry);
+                robot.driveBackwardForSteps(110, 0.2, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(50, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(55, 0.8, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1300, 0.2, telemetry);
+                robot.driveForwardForSteps(1350, 0.2, telemetry);
                 sleep(200);
 
                 robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(600, 0.3, telemetry);
+                robot.driveForwardForSteps(675, 0.25, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(15, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(10, 0.8, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1050, 0.25, telemetry);
+                robot.driveForwardForSteps(1100, 0.2, telemetry);
                 sleep(200);
 
                 robot.flipServoUp();
-                sleep(200);
+                sleep(500);
 
                 robot.driveBackwardForSteps(800, 0.2, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(85, 0.2, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(700, 0.2, telemetry);
+                robot.driveForwardForSteps(800, 0.2, telemetry);
+            } else if (location == cubeLocation.CENTER) {
+                robot.driveForwardForSteps(640, 0.2, telemetry);
                 sleep(200);
 
-                robot.flipServoDown();
+                robot.driveBackwardForSteps(190, 0.2, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(35, 0.2, telemetry);
+                robot.rotateCounterClockwiseGyro(80, 0.8, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1000, 0.2, telemetry);
-            } else if (goldPos == 0) { // Center
-                robot.driveForwardForSteps(600, 0.2, telemetry);
+                robot.driveForwardForSteps(1660, 0.2, telemetry);
                 sleep(200);
 
-                robot.driveBackwardForSteps(400, 0.2, telemetry);
+                robot.rotateCounterClockwiseGyro(30, 0.8 ,telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(90, 0.8, telemetry);
+                robot.driveForwardForSteps(675, 0.26, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1450, 0.2, telemetry);
+                robot.rotateCounterClockwiseGyro(10, 0.8, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
+                robot.driveForwardForSteps(1100, 0.2, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(675, 0.3, telemetry);
+                robot.flipServoUp();
+                sleep(500);
+
+                robot.driveBackwardForSteps(1100, 0.2, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(15, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(85, 0.2, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1100, 0.25, telemetry);
+                robot.driveForwardForSteps(800, 0.2, telemetry);
+            } else if (location == cubeLocation.RIGHT) {
+                robot.rotateClockwiseGyro(30, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(900, 0.2, telemetry);
+                sleep(200);
+
+                robot.driveBackwardForSteps(600, 0.2, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(100, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(1250, 0.25, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(45, 0.8, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSteps(2400, 0.25, telemetry);
                 sleep(200);
 
                 robot.flipServoUp();
                 sleep(200);
 
-                robot.driveBackwardForSteps(800, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(250, 0.2, telemetry);
-                sleep(200);
-
-                robot.flipServoDown();
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(35, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(500, 0.2, telemetry);
-            } else if (goldPos == 1) { // Right
-                robot.driveForwardForSteps(200, 0.3, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1300, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveBackwardForSteps(1300, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(450, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(50, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1300, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(600, 0.3, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(15, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1050, 0.25, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-                sleep(200);
-
-                robot.driveBackwardForSteps(1200, 0.2, telemetry);
-                sleep(200);
-
-                robot.flipServoDown();
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(90, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(500, 0.2, telemetry);
-                sleep(200);
+                robot.driveBackwardForSteps(1800, 0.2, telemetry);
             }
         }
 
-        if (tfod != null) {
-            tfod.shutdown();
+        if (opModeIsActive()) {
+            robot.boomRotateAuton();
+        }
+
+        if (robot.tfod != null) {
+            robot.tfod.shutdown();
         }
 
         while (opModeIsActive()) {
             sleep(20);
         }
-    }
-
-    /**
-     * Initialize the Vuforia localization engine.
-     */
-    private void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-        parameters.vuforiaLicenseKey = Constants.Vision.VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the Tensor Flow Object Detection engine.
-    }
-
-    /**
-     * Initialize the Tensor Flow Object Detection engine.
-     */
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
-        tfod.loadModelFromAsset(Constants.Vision.TFOD_MODEL_ASSET, Constants.Vision.LABEL_GOLD_MINERAL, Constants.Vision.LABEL_SILVER_MINERAL);
     }
 }
