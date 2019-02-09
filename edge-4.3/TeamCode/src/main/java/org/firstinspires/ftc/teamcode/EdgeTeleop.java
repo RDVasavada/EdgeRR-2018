@@ -76,8 +76,8 @@ public class EdgeTeleop extends LinearOpMode {
 
             robot.robotLift(liftSpeed);
 
-            telemetry.addData("Lift tolerance", robot.liftMotor1.getTargetPositionTolerance());
-            telemetry.addData("Lift count", robot.liftMotor1.getCurrentPosition());
+            telemetry.addData("Lift tolerance", robot.liftMotor.getTargetPositionTolerance());
+            telemetry.addData("Lift count", robot.liftMotor.getCurrentPosition());
 
             if (gamepad1.a) {
                 robot.liftServoRelease();

@@ -38,8 +38,7 @@ public class EdgeBot {
     protected DcMotorEx rightDriveMotor;
 
     // Declare functional motors
-    protected DcMotorEx liftMotor1;
-    protected DcMotorEx liftMotor2;
+    protected DcMotorEx liftMotor;
 
     protected DcMotorEx boomExtendMotor;
     protected DcMotorEx boomRotateMotor;
@@ -57,7 +56,7 @@ public class EdgeBot {
     private Servo liftServo;
 
     // Declare distance sensors
-    private DistanceSensor markerDistanceSensor;
+    private ModernRoboticsI2cRangeSensor markerDistanceSensor;
     private DistanceSensor liftDistanceSensor;
 
     // Declare imu (inertial motion unit)
@@ -118,11 +117,8 @@ public class EdgeBot {
         rightDriveMotor = (DcMotorEx) hMap.dcMotor.get("rdmotor");
 
         // Initialize functional motors
-        liftMotor1 = (DcMotorEx) hMap.dcMotor.get("liftmotor1");
-        liftMotor1.setTargetPositionTolerance(15);
-
-        liftMotor2 = (DcMotorEx) hMap.dcMotor.get("liftmotor2");
-        liftMotor2.setTargetPositionTolerance(15);
+        liftMotor = (DcMotorEx) hMap.dcMotor.get("liftmotor");
+        liftMotor.setTargetPositionTolerance(15);
 
         boomExtendMotor = (DcMotorEx) hMap.dcMotor.get("extendmotor");
         boomRotateMotor = (DcMotorEx) hMap.dcMotor.get("rotatemotor");
@@ -132,7 +128,7 @@ public class EdgeBot {
         initialDeployCount = deploymentMotor.getCurrentPosition();
 
         // Initialize the distance sensors
-        //marketDistanceSensor = hMap.get(DistanceSensor.class, "markerrange");
+        markerDistanceSensor = hMap.get(ModernRoboticsI2cRangeSensor.class, "markerrange");
         //liftDistanceSensor = hMap.get(DistanceSensor.class, "liftrange");
 
         // Initialize the imu
@@ -311,6 +307,17 @@ public class EdgeBot {
         driveForwardForSteps(steps, speed, telemetry);
     }
 
+    public void driveForwardForSeconds(double millis, double speed, Telemetry telemetry) {
+        setDriveMotorsRunUsingEncoders();
+
+        localPeriod.reset();
+        while (localPeriod.milliseconds() < millis) {
+            driveForwards(speed);
+        }
+
+        driveForwards(0);
+    }
+
     // Rotate counterclockwise at given speed
     public void rotateCounterClockwise(double speed) {
         leftDriveMotor.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -424,18 +431,26 @@ public class EdgeBot {
     }
 
     // Drive to a certain distance (inches) on the marker sensor
-    public void driveToMarkerDistance(double power, double distance) {
+    public void driveToMarkerDistance(double power, double distance, Telemetry telemetry) {
         double currentDistance = getMarkerSensorDistance(DistanceUnit.INCH);
+        double error = currentDistance - distance;
 
-        double error = distance - currentDistance;
+        while (currentOpmode.opModeIsActive() && Math.abs(error) > 1) {
+            currentDistance = getMarkerSensorDistance(DistanceUnit.INCH);
+            error = currentDistance - distance;
 
-        while (currentOpmode.opModeIsActive() && Math.abs(error) > 1.5) {
             if (error > 0) {
                 driveForwards(power);
             } else {
                 driveBackwards(power);
             }
+
+            telemetry.addData("Distance", currentDistance);
+            telemetry.addData("Error", error);
+            telemetry.update();
         }
+
+        stopDriveMotors();
     }
 
     // Drive to a certain distance (inches) on the lift sensor
@@ -451,6 +466,8 @@ public class EdgeBot {
                 driveForwards(power);
             }
         }
+
+        driveForwards(0);
     }
 
     // Set the drive motors to run without encoders
@@ -492,45 +509,31 @@ public class EdgeBot {
     }
 
     public void robotLowerAuton() {
-        liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
-        liftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Calculate step counts
-        int liftMotor1Target = liftMotor2.getCurrentPosition() + 16500;
-        int liftMotor2Target = liftMotor2.getCurrentPosition() + 16500;
+        int liftMotor1Target = liftMotor.getCurrentPosition() + 16400;
 
         // Set target steps
-        liftMotor1.setTargetPosition(liftMotor1Target);
-        liftMotor2.setTargetPosition(liftMotor2Target);
+        liftMotor.setTargetPosition(liftMotor1Target);
 
         // Turn on RUN_TO_POSITION
-        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // keep looping while we are still active, and there is time left, and both motors are running.
-        while (liftMotor1.isBusy() && liftMotor2.isBusy() && currentOpmode.opModeIsActive()) {
+        while (liftMotor.isBusy() && currentOpmode.opModeIsActive()) {
             waitForTick(50);
-            liftMotor1.setPower(1);
-            liftMotor2.setPower(1);
+            liftMotor.setPower(1);
         }
 
         // Stop all motion;
-        liftMotor2.setPower(0);
-
-        // Turn off RUN_TO_POSITION
-        liftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor.setPower(0);
     }
 
     public void robotLift(double power) {
-        liftMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftMotor1.setDirection(DcMotorSimple.Direction.FORWARD);
-        liftMotor1.setPower(power);
-
-        liftMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
-        liftMotor2.setPower(power);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor.setPower(power);
     }
 
     public void armHomePosition() {
@@ -675,17 +678,14 @@ public class EdgeBot {
     }
 
     public void boomRotateAuton() {
-        boomRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        boomRotateMotor.setTargetPosition(boomRotateMotor.getCurrentPosition() + 180);
-        boomRotateMotor.setPower(0.5);
+        boomRotateMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        while (currentOpmode.opModeIsActive() && boomRotateMotor.isBusy()) {
-            waitForTick(50);
+        localPeriod.reset();
+        while (currentOpmode.opModeIsActive() && localPeriod.milliseconds() < 1300) {
+            boomRotateMotor.setPower(0.7);
         }
 
         boomRotateMotor.setPower(0);
-
-        boomRotateMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void dropMarker() {
@@ -742,7 +742,7 @@ public class EdgeBot {
     }
 
     public void flipServoUp() {
-        flipServo.setPosition(0.5);
+        flipServo.setPosition(0.6);
     }
 
     public void liftServoRelease() {

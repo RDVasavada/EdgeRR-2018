@@ -43,7 +43,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 
-@Autonomous(name = "Depot - Double Sample", group = "Concept")
+@Autonomous(name = "Depot - Double Sample (DO NOT USE)", group = "Concept")
 //@Disabled
 public class DepotAutonDouble extends LinearOpMode {
     EdgeBot robot;

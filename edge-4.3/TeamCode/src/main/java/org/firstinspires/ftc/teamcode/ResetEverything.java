@@ -56,8 +56,7 @@ public class ResetEverything extends LinearOpMode {
 
         robot.setDriveMotorsResetEncoders();
         robot.setArmMotorsResetEncoders();
-        robot.liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.deploymentMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         while (opModeIsActive()) {

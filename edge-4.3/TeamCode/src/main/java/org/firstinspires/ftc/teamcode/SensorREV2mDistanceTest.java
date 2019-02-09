@@ -69,10 +69,10 @@ public class SensorREV2mDistanceTest extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            double liftDistance = robot.getLiftSensorDistance(DistanceUnit.INCH);
+            //double liftDistance = robot.getLiftSensorDistance(DistanceUnit.INCH);
             double markerDistance = robot.getMarkerSensorDistance(DistanceUnit.INCH);
 
-            telemetry.addData("Lift side", liftDistance);
+            //telemetry.addData("Lift side", liftDistance);
             telemetry.addData("Marker side", markerDistance);
 
             telemetry.update();

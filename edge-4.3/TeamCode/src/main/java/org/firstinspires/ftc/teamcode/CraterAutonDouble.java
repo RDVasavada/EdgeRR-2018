@@ -78,10 +78,12 @@ public class CraterAutonDouble extends LinearOpMode {
                 robot.tfod.activate();
             }
 
-            /*robot.robotLowerAuton();
+            robot.robotLowerAuton();
 
             robot.liftServoRelease();
-            sleep(1000);*/
+            sleep(1000);
+
+            robot.flipServoDown();
 
             robot.driveForwardForSteps(175, 0.3, telemetry);
             sleep(200);
@@ -108,110 +110,99 @@ public class CraterAutonDouble extends LinearOpMode {
             }
 
             if (location == cubeLocation.LEFT) {
-                //initial turn
-                robot.rotateCounterClockwiseGyro(30, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(35, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(880, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveBackwardForSteps(110, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(55, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1350, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(20, 0.8 ,telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(675, 0.25, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(10, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1100, 0.2, telemetry);
-                sleep(200);
+                robot.driveForwardForInches(25, 0.7, telemetry);
 
                 robot.flipServoUp();
-                sleep(500);
 
-                robot.driveBackwardForSteps(800, 0.2, telemetry);
+                robot.driveBackwardForInches(8, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(85, 0.2, telemetry);
+                robot.rotateCounterClockwiseGyro(55, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(800, 0.2, telemetry);
+                robot.driveForwardForInches(40, 0.7, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSeconds(1750, 0.15, telemetry);
+
+                robot.rotateCounterClockwiseGyro(35, 1,telemetry);
+                sleep(200);
+
+                //robot.driveForwardForInches(43, 0.7, telemetry);
+                robot.driveToMarkerDistance(0.6, 11.5, telemetry);
+
+                robot.boomRotateAuton();
+                robot.flipServoDown();
+
+                /*robot.driveBackwardForInches(9, 0.6, telemetry);
+                sleep(200);*/
+
+                robot.rotateCounterClockwiseGyro(90, 1, telemetry);
+                sleep(200);
+
+                robot.driveForwardForInches(32, 1, telemetry);
+                sleep(200);
             } else if (location == cubeLocation.CENTER) {
-                robot.driveForwardForSteps(640, 0.2, telemetry);
-                sleep(200);
-
-                robot.driveBackwardForSteps(190, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(80, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1660, 0.2, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(30, 0.8 ,telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(675, 0.26, telemetry);
-                sleep(200);
-
-                robot.rotateCounterClockwiseGyro(10, 0.8, telemetry);
-                sleep(200);
-
-                robot.driveForwardForSteps(1100, 0.2, telemetry);
-                sleep(200);
+                robot.driveForwardForInches(21, 0.6, telemetry);
 
                 robot.flipServoUp();
-                sleep(500);
 
-                robot.driveBackwardForSteps(1100, 0.2, telemetry);
+                robot.driveBackwardForInches(7, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(85, 0.2, telemetry);
+                robot.rotateCounterClockwiseGyro(90, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(800, 0.2, telemetry);
+                robot.driveForwardForInches(49, 0.6, telemetry);
+                sleep(200);
+
+                robot.driveForwardForSeconds(1750, 0.15, telemetry);
+
+                robot.rotateCounterClockwiseGyro(35, 1,telemetry);
+                sleep(200);
+
+                robot.driveToMarkerDistance(0.7, 7, telemetry);
+
+                robot.boomRotateAuton();
+                robot.flipServoDown();
+
+                robot.driveBackwardForInches(7, 0.6, telemetry);
+                sleep(200);
+
+                robot.rotateCounterClockwiseGyro(125,1, telemetry);
+                sleep(200);
+
+                robot.driveForwardForInches(25, 1, telemetry);
+                sleep(200);
             } else if (location == cubeLocation.RIGHT) {
-                robot.rotateClockwiseGyro(30, 0.8, telemetry);
+                robot.rotateClockwiseGyro(35, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(900, 0.2, telemetry);
+                robot.driveForwardForInches(25, 0.6, telemetry);
                 sleep(200);
 
-                robot.driveBackwardForSteps(600, 0.2, telemetry);
+                robot.driveBackwardForInches(10, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(100, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(125, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1250, 0.25, telemetry);
+                robot.driveForwardForInches(48, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(45, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(40, 1,telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(2400, 0.25, telemetry);
+                robot.driveForwardForInches(44, 0.6, telemetry);
                 sleep(200);
 
-                robot.flipServoUp();
-                sleep(200);
+                robot.boomRotateAuton();
 
-                robot.driveBackwardForSteps(1800, 0.2, telemetry);
+                robot.driveBackwardForInches(17, 0.6, telemetry);
             }
-        }
-
-        if (opModeIsActive()) {
-            robot.boomRotateAuton();
         }
 
         if (robot.tfod != null) {

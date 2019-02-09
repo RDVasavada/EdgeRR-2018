@@ -83,7 +83,7 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
             robot.liftServoRelease();
             sleep(1000);
 
-            robot.driveForwardForSteps(175, 0.3, telemetry);
+            robot.driveForwardForInches(3.25, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
@@ -92,7 +92,7 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
                 location = robot.detectCube(telemetry);
             }
 
-            robot.driveForwardForSteps(130, 0.2, telemetry);
+            robot.driveForwardForInches(3, 0.3, telemetry);
             sleep(200);
 
             timer.reset();
@@ -103,74 +103,62 @@ public class DepotAutonSingleNoPark extends LinearOpMode {
 
             if (location == cubeLocation.UNKNOWN) {
                 location = cubeLocation.CENTER;
-                telemetry.addData(">>", "Defaulting to right");
+                telemetry.addData(">>", "Defaulting to center");
                 telemetry.update();
             }
 
             if (location == cubeLocation.LEFT) { // Left
-                robot.driveForwardForSteps(125, 0.2, telemetry);
+                robot.driveForwardForInches(2.8, 0.6, telemetry);
 
-                robot.rotateCounterClockwiseGyro(40, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(45, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1350, 0.2, telemetry);
+                robot.driveForwardForInches(33, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateClockwiseGyro(80, 0.8, telemetry);
+                robot.rotateClockwiseGyro(90, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1475, 0.2, telemetry);
-                sleep(200);
-
-                robot.flipServoUp();
-                sleep(500);
-
-                robot.driveBackwardForSteps(1100, 0.2, telemetry);
-                sleep(200);
+                robot.driveToMarkerDistance(0.6, 9, telemetry);
 
                 robot.boomRotateAuton();
+
+                robot.driveBackwardForInches(30, 0.6, telemetry);
             } else if (location == cubeLocation.CENTER) { // Center
-                robot.driveForwardForSteps(2050, 0.3, telemetry);
-                sleep(200);
-
-                robot.flipServoUp(); //deposits
-                sleep(500);
-
-                robot.driveBackwardForSteps(1300, 0.2, telemetry);
+                robot.driveForwardForInches(45, 0.6, telemetry);
                 sleep(200);
 
                 robot.boomRotateAuton();
+
+                robot.driveBackwardForInches(29, 0.6, telemetry);
             } else if (location == cubeLocation.RIGHT) { // Right
-                robot.driveForwardForSteps(150, 0.3, telemetry);
+                robot.driveForwardForInches(3.3, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateClockwiseGyro(40, 0.8, telemetry);
+                robot.rotateClockwiseGyro(45, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1300, 0.2, telemetry);
+                robot.driveForwardForInches(33, 0.6, telemetry);
                 sleep(200);
 
-                robot.rotateCounterClockwiseGyro(85, 0.8, telemetry);
+                robot.rotateCounterClockwiseGyro(90, 1, telemetry);
                 sleep(200);
 
-                robot.driveForwardForSteps(1400 , 0.25, telemetry);
+                robot.driveForwardForInches(31 , 0.6, telemetry);
                 sleep(200);
 
-                robot.flipServoUp(); //drop marker
-                sleep(500);
+                robot.boomRotateAuton();
 
-                robot.driveBackwardForSteps(1350, 0.25, telemetry);
+                robot.driveBackwardForInches(33, 0.6, telemetry);
                 sleep(200);
 
                 robot.flipServoDown();
                 sleep(1000);
 
-                robot.rotateClockwiseGyro(85, 0.8, telemetry);
+                robot.rotateClockwiseGyro(90, 1, telemetry);
                 sleep(200);
 
-                robot.driveBackwardForSteps(1400, 0.2, telemetry);
-
-                robot.boomRotateAuton();
+                robot.driveBackwardForInches(28, 0.6, telemetry);
             }
         }
 

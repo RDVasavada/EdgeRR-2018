@@ -178,6 +178,8 @@ public class DepotAutonSingle extends LinearOpMode {
 
                 robot.driveForwardForSteps(800, 0.25, telemetry);
                 sleep(200);
+
+
             } else if (goldPos == 0) { // Center
                 robot.driveForwardForSteps(2200, 0.3, telemetry);
                 sleep(200);
